@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>運転席から見る富士山</title>
+<meta name="description" content="東名・名神高速道路を走る車のフロントガラスとルームミラーに、富士山がどう見えるかを3Dで走りながら確かめる図。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one column. A windshield stage on top, the driving controls shaped
+   as a straight road under it, then a chart of where Fuji sits around the car. */
+:root {
+  --bg: #eef1f2;
+  --land: #f8f9f6;      /* surfaces, label halo */
+  --ink: #17212a;
+  --muted: #5d6b75;
+  --rule: #cfd7da;
+  --road: #1c7a5b;      /* expressway sign green */
+  --fuji: #d0432b;      /* vermilion: Fuji in every data mark */
+  --band: #dfe6e8;      /* chart: what the windshield covers */
+  /* 3D scene */
+  --sky-top: #9fc0dc; --sky-haze: #e6edf0; --sea3d: #c6d7e0; --land3d: #e2e7d6;
+  --fuji-body: #5f7892; --fuji-snow: #ffffff; --lane: #f4f6f2; --dash: #141b21;
+  --font-display: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1418; --land: #1b262e; --ink: #e7edf0; --muted: #93a1ab; --rule: #2a3741;
+    --road: #49b890; --fuji: #ff7c5e; --band: #1a252d;
+    --sky-top: #0b1930; --sky-haze: #33475a; --sea3d: #111c27; --land3d: #1c2a33;
+    --fuji-body: #2c3f55; --fuji-snow: #dfe8ef; --lane: #c9d3d8; --dash: #05080a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1418; --land: #1b262e; --ink: #e7edf0; --muted: #93a1ab; --rule: #2a3741;
+  --road: #49b890; --fuji: #ff7c5e; --band: #1a252d;
+  --sky-top: #0b1930; --sky-haze: #33475a; --sea3d: #111c27; --land3d: #1c2a33;
+  --fuji-body: #2c3f55; --fuji-snow: #dfe8ef; --lane: #c9d3d8; --dash: #05080a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; flex-direction: column; gap: 8px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 4.2vw, 36px); line-height: 1.3; margin: 0; text-wrap: balance; letter-spacing: .02em; }
+h2 { font-size: 15px; margin: 0; }
+.lead { margin: 0; max-width: 41em; color: var(--muted); }
+.also { margin: 0; font-weight: 500; }
+.also a { color: var(--ink); text-underline-offset: 3px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fuji); outline-offset: 3px; }
+
+/* ---------- windshield ---------- */
+.stage { position: relative; aspect-ratio: 2 / 1; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--sky-haze); }
+@media (max-width: 600px) { .stage { aspect-ratio: 3 / 2; } }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mirror { position: absolute; top: 3.5%; left: 35%; width: 30%; aspect-ratio: 3.4 / 1; border: 3px solid var(--dash); border-radius: 9px; box-shadow: 0 3px 10px rgba(0,0,0,.28); pointer-events: none; }
+.mirror span { position: absolute; top: 100%; left: 50%; transform: translate(-50%, 5px); font-size: 10.5px; font-weight: 500; white-space: nowrap; color: var(--ink); text-shadow: 0 0 3px var(--sky-haze), 0 0 3px var(--sky-haze); }
+@media (max-width: 600px) { .mirror { left: 29%; width: 42%; } }
+.overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sign { position: absolute; left: 0; top: 0; padding: 1px 7px; border-radius: 4px; border: 1.5px solid #fff; background: #1c7a5b; color: #fff; font-weight: 700; font-size: 12px; line-height: 1.5; white-space: nowrap; transform-origin: 50% 100%; }
+.sign::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 9px; margin-left: -1px; background: #fff; }
+.peak { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; white-space: nowrap; line-height: 1.25; text-shadow: 0 0 4px var(--sky-haze), 0 0 4px var(--sky-haze), 0 0 2px var(--sky-haze); }
+.peak b { font-size: 13px; }
+.peak span { font-size: 11px; font-variant-numeric: tabular-nums; }
+.peak i { width: 0; height: 0; border: 5px solid transparent; border-top: 6px solid var(--fuji); margin-top: 2px; }
+.edge { position: absolute; top: 47%; padding: 4px 11px; border-radius: 999px; background: var(--land); border: 1px solid var(--rule); font-size: 12.5px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.16); }
+.edge b { color: var(--fuji); }
+.dash { position: absolute; left: 0; bottom: 0; width: 100%; height: 15%; display: block; pointer-events: none; }
+.nogl[hidden] { display: none; }
+.nogl { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; text-align: center; color: var(--muted); }
+
+/* ---------- readout ---------- */
+.hud { display: grid; grid-template-columns: 1.3fr 1fr 1.5fr; gap: 6px 20px; margin: 0; }
+.hud div { min-width: 0; }
+.hud dt { font-size: 12px; color: var(--muted); }
+.hud dd { margin: 0; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.4; }
+.hud dd small { font-size: 12.5px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+@media (max-width: 600px) { .hud { grid-template-columns: 1fr 1fr; } .hud div:last-child { grid-column: 1 / -1; } .hud dd { font-size: 16px; } }
+
+/* ---------- controls ---------- */
+.controls { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
+.play { min-width: 104px; padding: 7px 16px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg); font-weight: 700; cursor: pointer; }
+.seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.seg button { padding: 7px 14px; border: 0; background: transparent; cursor: pointer; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 700; }
+.scrub { display: flex; flex-direction: column; gap: 2px; }
+.scrub label { font-size: 12px; color: var(--muted); }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--road); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--road); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%; background: var(--land); border: 3px solid var(--ink); }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--land); border: 3px solid var(--ink); }
+.ticks { position: relative; height: 22px; font-size: 12px; font-weight: 500; }
+.ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+
+/* ---------- chart ---------- */
+.chart-block { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--rule); padding-top: 14px; }
+.chart-block p { margin: 0; color: var(--muted); font-size: 13px; max-width: 50em; }
+svg#chart { display: block; width: 100%; cursor: pointer; }
+svg#chart text { font-family: var(--font-body); fill: var(--muted); font-size: 11px; }
+svg#chart .ic { fill: var(--ink); font-size: 11.5px; font-weight: 500; }
+svg#chart .zone { font-size: 11px; font-weight: 500; fill: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 12.5px; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.sw { width: 16px; height: 10px; border-radius: 2px; border: 1px solid var(--rule); flex: none; }
+
+details { border-top: 1px solid var(--rule); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 700; border-radius: 4px; }
+.table-scroll { overflow-x: auto; margin-top: 10px; }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 460px; }
+th, td { text-align: left; padding: 4px 18px 4px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { color: var(--muted); font-weight: 500; }
+td.r, th.r { text-align: right; }
+.notes { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--muted); font-size: 13px; max-width: 50em; }
+.notes h2 { font-size: 13px; margin: 0 0 4px; color: var(--ink); }
+.notes ul { margin: 0; padding-left: 1.2em; }
+.notes a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>運転席から見る富士山</h1>
+    <p class="lead">東名・名神高速道路を走る車の、フロントガラス越しの眺めです。車はいつも正面を向いているので、道が曲がるたびに富士山のほうが左右へ動き、やがて後ろへ回ってルームミラーに移ります。</p>
+    <p class="also"><a href="../">← 平面版「まっすぐな道と、動く富士山」</a></p>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="gl" role="img" aria-label="運転席から前方を見た3D表示。道路、陸地と海、富士山が描かれ、上部中央にルームミラーがある。"></canvas>
+    <div class="overlay" id="overlay">
+      <div class="peak" id="peak"><b>富士山</b><span id="peakDist"></span><i></i></div>
+      <div class="edge" id="edge" hidden></div>
+    </div>
+    <svg class="dash" viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 150 L0 78 Q500 26 1000 78 L1000 150 Z" fill="var(--dash)"/>
+      <circle cx="715" cy="165" r="140" fill="none" stroke="var(--dash)" stroke-width="20"/>
+    </svg>
+    <div class="mirror" id="mirror"><span>ルームミラー（後ろ）</span></div>
+    <div class="nogl" id="nogl" hidden>この環境では3D表示を使えません。下のチャートと表で、富士山の方向の変化を見られます。</div>
+  </div>
+
+  <dl class="hud" aria-live="off">
+    <div><dt>現在地</dt><dd id="hudSec"></dd></div>
+    <div><dt>富士山まで</dt><dd id="hudDist"></dd></div>
+    <div><dt>富士山の方向（進行方向に対して）</dt><dd id="hudDir"></dd></div>
+  </dl>
+
+  <div class="controls">
+    <button type="button" class="play" id="play">▶ 走る</button>
+    <div class="seg" role="group" aria-label="走る向き">
+      <button type="button" id="dirDown" aria-pressed="true">下り　東京 → 西宮</button>
+      <button type="button" id="dirUp" aria-pressed="false">上り　西宮 → 東京</button>
+    </div>
+  </div>
+  <div class="scrub">
+    <label for="pos">道路上の位置（ドラッグで移動）</label>
+    <input type="range" id="pos" min="0" max="100" step="0.1" value="0">
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
+  </div>
+
+  <section class="chart-block">
+    <h2>富士山は車のまわりのどこにあるか</h2>
+    <p>横軸は進行方向に対する富士山の方向、縦軸は道のり（上が出発地）です。線が左右に振れるほど、富士山が視界の中を動いています。クリックするとその位置へ移動します。</p>
+    <svg id="chart" role="img" aria-label="道のりに沿った、進行方向に対する富士山の方向の推移"></svg>
+    <ul class="legend">
+      <li><span class="sw" style="background:var(--band)"></span>フロントガラスに入る範囲</li>
+      <li><span class="sw" style="background:repeating-linear-gradient(135deg,var(--band) 0 3px,transparent 3px 6px)"></span>ルームミラーに映る範囲</li>
+      <li><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--fuji)" stroke-width="1.8"/></svg>富士山の方向</li>
+    </ul>
+  </section>
+
+  <details>
+    <summary>40地点の数値を表で見る</summary>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th class="r">順</th><th>区間</th><th class="r">富士山まで</th><th>方向</th><th>見える場所</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <section class="notes">
+    <h2>計算とデータ</h2>
+    <ul>
+      <li>車の向きは、その地点の前後数kmの道路の向きです。<a href="../">平面版「まっすぐな道と、動く富士山」</a>の直線化と同じ計算で、富士山の方向と距離も同じ値です。</li>
+      <li>見やすさのために誇張しています。視点は路面から600mの高さ、道路の幅は400m、富士山の高さは2倍です。地面は平らで、富士山以外の山や建物はありません。</li>
+      <li>遠い地点では実際には富士山は見えません。地球の丸みも無視した、地図上の計算です。</li>
+      <li>道路・海岸線・湖は <a href="https://www.naturalearthdata.com/">Natural Earth</a>（1:1000万）の公開データです。線形は簡略化されていて、実際の道のりより短く、位置に数kmのずれがあります。看板の地名はインターチェンジ名で、位置は概略です。</li>
+      <li>着想は杉浦康平のダイアグラム「右往左往する富士山の地図」です。原図を再現したものではありません。</li>
+    </ul>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../data.js"></script>
+<script>
+const D = window.FUJI_DATA;
+
+(() => {
+  /* ---------- geometry (km; x east, y north; Fuji summit at the origin) ---------- */
+  const P = D.route, N = P.length;            // west (Nishinomiya) -> east (Tokyo)
+  const al = new Float64Array(N - 1), U = new Float64Array(N), hv = new Float64Array(N);
+  for (let i = 0, prev = null; i < N - 1; i++) {
+    const dx = P[i + 1][0] - P[i][0], dy = P[i + 1][1] - P[i][1];
+    let a = Math.atan2(dy, dx);
+    if (prev !== null) { while (a - prev > Math.PI) a -= 2 * Math.PI; while (a - prev < -Math.PI) a += 2 * Math.PI; }
+    al[i] = prev = a; U[i + 1] = U[i] + Math.hypot(dx, dy);
+  }
+  for (let i = 0; i < N; i++) hv[i] = i === 0 ? al[0] : i === N - 1 ? al[N - 2] : (al[i - 1] + al[i]) / 2;
+  const L = U[N - 1];
+  const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  function locate(u) {                         // position and eastward heading at arc length u
+    u = clamp(u, 0, L);
+    let lo = 0, hi = N - 2;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (U[m] <= u) lo = m; else hi = m - 1; }
+    const f = (u - U[lo]) / (U[lo + 1] - U[lo]);
+    return { x: lerp(P[lo][0], P[lo + 1][0], f), y: lerp(P[lo][1], P[lo + 1][1], f), h: lerp(hv[lo], hv[lo + 1], f) };
+  }
+  const ics = D.ics.map(c => { const q = locate(c.u); return { ...c, x: q.x, y: q.y, h: q.h }; });
+
+  /* ---------- state ---------- */
+  let dir = 'down';       // 'down' = Tokyo -> Nishinomiya, 'up' = Nishinomiya -> Tokyo
+  let p = 0;              // km travelled from the start of the current direction
+  let playing = false, dirty = true;
+  const TRIP_SECONDS = 90;
+  const VFOV = 58, PITCH = 5 * Math.PI / 180, CAM_H = 0.6, ROAD_W = 0.4, FUJI_H = 3.776 * 2, FUJI_R = 18;
+  const M_VFOV = 22, M_PITCH = 2 * Math.PI / 180, M_ASPECT = 3.4;
+  const mirrorHalf = Math.atan(Math.tan(M_VFOV / 2 * Math.PI / 180) * M_ASPECT) * 180 / Math.PI;
+  let windHalf = 48;
+
+  const uOf = pp => dir === 'down' ? L - pp : pp;
+  function poseAt(pp) {
+    const q = locate(uOf(pp)), H = q.h + (dir === 'down' ? Math.PI : 0);
+    const fx = Math.cos(H), fy = Math.sin(H), wx = -q.x, wy = -q.y;
+    const ahead = wx * fx + wy * fy, right = wx * fy - wy * fx;
+    return { u: uOf(pp), x: q.x, y: q.y, fx, fy, dist: Math.hypot(wx, wy), ang: Math.atan2(right, ahead) * 180 / Math.PI };
+  }
+  function dirText(a) {
+    const m = Math.abs(a);
+    if (m < 8) return 'ほぼ正面';
+    if (m > 172) return 'ほぼ真後ろ';
+    return (a > 0 ? '右' : '左') + (m > 90 ? '後ろ ' : ' ') + Math.round(m) + '°';
+  }
+  function whereText(a) {
+    const m = Math.abs(a);
+    return m <= windHalf ? 'フロントガラス' : m >= 180 - mirrorHalf ? 'ルームミラー' : '横（視界の外）';
+  }
+  function sectionName(u) {
+    const order = [...ics].sort((a, b) => dir === 'down' ? b.u - a.u : a.u - b.u);
+    for (const c of order) if (Math.abs(c.u - u) < 3) return c.n + '付近';
+    for (let j = 0; j < order.length - 1; j++) {
+      const a = order[j].u, b = order[j + 1].u;
+      if (u <= Math.max(a, b) && u >= Math.min(a, b)) return order[j].n + '–' + order[j + 1].n + '間';
+    }
+    return '';
+  }
+
+  /* ---------- 3D scene ---------- */
+  const stage = document.getElementById('stage'), canvas = document.getElementById('gl');
+  const mirrorEl = document.getElementById('mirror'), overlay = document.getElementById('overlay');
+  const peakEl = document.getElementById('peak'), peakDist = document.getElementById('peakDist'), edgeEl = document.getElementById('edge');
+  let renderer = null, scene, cam, mcam, sky, fuji, mats = {}, W = 800, H = 400;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function ribbon(half, u0, u1, step) {       // strip along the road between arc lengths, +/- half km wide, offset allowed via array
+    const pos = [], idx = [];
+    const n = Math.max(1, Math.ceil((u1 - u0) / step));
+    for (let k = 0; k <= n; k++) {
+      const q = locate(lerp(u0, u1, k / n)), nx = -Math.sin(q.h), ny = Math.cos(q.h);
+      pos.push(q.x + nx * half[0], 0, -(q.y + ny * half[0]), q.x + nx * half[1], 0, -(q.y + ny * half[1]));
+      if (k < n) { const a = k * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    }
+    return { pos, idx };
+  }
+  function meshFrom(parts, mat, order) {
+    const pos = [], idx = [];
+    for (const g of parts) { const base = pos.length / 3; for (const v of g.pos) pos.push(v); for (const i of g.idx) idx.push(i + base); }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx);
+    const m = new THREE.Mesh(geo, mat); m.renderOrder = order; m.frustumCulled = false; scene.add(m); return m;
+  }
+  function flat(rings, mat, order) {
+    const shapes = rings.map(r => new THREE.Shape(r.map(q => new THREE.Vector2(q[0], q[1]))));
+    const geo = new THREE.ShapeGeometry(shapes); geo.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(geo, mat); m.renderOrder = order; m.frustumCulled = false; scene.add(m); return m;
+  }
+  function initScene() {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0xffffff, 25, 540);
+    cam = new THREE.PerspectiveCamera(VFOV, 2, 0.05, 3000);
+    mcam = new THREE.PerspectiveCamera(M_VFOV, M_ASPECT, 0.05, 3000);
+    const ground = o => new THREE.MeshBasicMaterial(Object.assign({ side: THREE.DoubleSide, depthTest: false, depthWrite: false }, o));
+    mats.sky = ground({ vertexColors: true, fog: false });
+    mats.sea = ground({}); mats.land = ground({}); mats.lake = ground({}); mats.road = ground({}); mats.lane = ground({});
+    mats.fuji = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+
+    sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 40, 24), mats.sky); sky.renderOrder = -10; sky.frustumCulled = false; scene.add(sky);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), mats.sea); sea.rotation.x = -Math.PI / 2; sea.renderOrder = -6; sea.frustumCulled = false; scene.add(sea);
+    flat(D.land, mats.land, -5);
+    flat(D.lakes, mats.lake, -4);
+    meshFrom([ribbon([-ROAD_W / 2, ROAD_W / 2], 0, L, 0.5)], mats.road, -3);
+    const marks = [ribbon([ROAD_W / 2 - 0.035, ROAD_W / 2], 0, L, 0.5), ribbon([-ROAD_W / 2, -ROAD_W / 2 + 0.035], 0, L, 0.5)];
+    for (let u = 0.4; u < L - 0.8; u += 2) marks.push(ribbon([-0.02, 0.02], u, u + 0.8, 0.4));   // centre dashes
+    meshFrom(marks, mats.lane, -2);
+
+    // Fuji: a concave cone with a small flat summit
+    const prof = [new THREE.Vector2(0.001, FUJI_H * 0.975), new THREE.Vector2(0.3, FUJI_H * 0.98), new THREE.Vector2(0.5, FUJI_H)];
+    const k = 2.6, e = Math.exp(-k);
+    for (let j = 1; j <= 30; j++) { const s = j / 30; prof.push(new THREE.Vector2(0.5 + s * (FUJI_R - 0.5), FUJI_H * (Math.exp(-k * s) - e) / (1 - e))); }
+    const fg = new THREE.LatheGeometry(prof, 72);
+    fg.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(fg.attributes.position.count * 3), 3));
+    fuji = new THREE.Mesh(fg, mats.fuji); fuji.frustumCulled = false; scene.add(fuji);
+    applyTheme();
+  }
+  function applyTheme() {
+    if (!renderer) return;
+    const c = n => new THREE.Color(css(n));
+    const top = c('--sky-top'), haze = c('--sky-haze');
+    scene.fog.color.copy(haze); renderer.setClearColor(haze, 1);
+    mats.sea.color.copy(c('--sea3d')); mats.lake.color.copy(c('--sea3d')); mats.land.color.copy(c('--land3d'));
+    mats.road.color.copy(c('--road')); mats.lane.color.copy(c('--lane'));
+    // sky: haze at the horizon, deeper overhead
+    const sg = sky.geometry, sp = sg.attributes.position, sc = new Float32Array(sp.count * 3), tmp = new THREE.Color();
+    for (let i = 0; i < sp.count; i++) { const t = Math.pow(clamp(sp.getY(i) / 1500 / 0.55, 0, 1), 0.75); tmp.copy(haze).lerp(top, t); sc[i * 3] = tmp.r; sc[i * 3 + 1] = tmp.g; sc[i * 3 + 2] = tmp.b; }
+    sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
+    // Fuji: snow line and shading baked into vertex colours
+    const body = c('--fuji-body'), snow = c('--fuji-snow');
+    const fp = fuji.geometry.attributes.position, fn = fuji.geometry.attributes.normal, fc = fuji.geometry.attributes.color;
+    const lx = 0.48, ly = 0.62, lz = 0.62;
+    for (let i = 0; i < fp.count; i++) {
+      const x = fp.getX(i), y = fp.getY(i), z = fp.getZ(i), a = Math.atan2(z, x);
+      const line = 0.56 + 0.07 * Math.sin(a * 5) + 0.04 * Math.sin(a * 11 + 1);
+      const s = clamp((y / FUJI_H - line) / 0.05 + 0.5, 0, 1);
+      const sh = 0.6 + 0.4 * Math.max(0, fn.getX(i) * lx + fn.getY(i) * ly + fn.getZ(i) * lz);
+      tmp.copy(body).lerp(snow, s).multiplyScalar(lerp(sh, 0.82 + 0.18 * sh, s));
+      fc.setXYZ(i, tmp.r, tmp.g, tmp.b);
+    }
+    fc.needsUpdate = true;
+    dirty = true;
+  }
+
+  /* ---------- overlay: IC signs ---------- */
+  const signEls = ics.map(c => { const e = document.createElement('div'); e.className = 'sign'; e.textContent = c.n; e.style.display = 'none'; overlay.insertBefore(e, peakEl); return e; });
+  let vTmp = null;
+  function project(x, y, z) {                 // map coords (x east, y north, z up) -> screen px, or null if behind / far off
+    vTmp.set(x, z, -y).project(cam);
+    if (vTmp.z > 1 || vTmp.z < -1) return null;
+    return [(vTmp.x + 1) / 2 * W, (1 - vTmp.y) / 2 * H, vTmp.x];
+  }
+
+  /* ---------- draw ---------- */
+  const hudSec = document.getElementById('hudSec'), hudDist = document.getElementById('hudDist'), hudDir = document.getElementById('hudDir');
+  function draw() {
+    const s = poseAt(p);
+    hudSec.textContent = sectionName(s.u);
+    hudDist.textContent = '約' + Math.round(s.dist) + ' km';
+    hudDir.innerHTML = dirText(s.ang) + '<small>' + whereText(s.ang) + '</small>';
+    moveCursor(s);
+    if (!renderer) return;
+
+    const cp = Math.cos(PITCH), sp = Math.sin(PITCH);
+    cam.position.set(s.x, CAM_H, -s.y);
+    cam.lookAt(s.x + s.fx * cp, CAM_H - sp, -(s.y + s.fy * cp));
+    cam.updateMatrixWorld();
+    const mp = Math.cos(M_PITCH), ms = Math.sin(M_PITCH);
+    mcam.position.copy(cam.position);
+    mcam.lookAt(s.x - s.fx * mp, CAM_H - ms, -(s.y - s.fy * mp));
+    sky.position.copy(cam.position);
+
+    renderer.setScissorTest(true);
+    renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
+    renderer.render(scene, cam);
+    const sr = stage.getBoundingClientRect(), mr = mirrorEl.getBoundingClientRect();
+    const mx = mr.left - sr.left - stage.clientLeft + 3, my = mr.top - sr.top - stage.clientTop + 3, mw = mr.width - 6, mh = mr.height - 6;
+    if (mw > 10 && mh > 4) {
+      renderer.setViewport(mx, H - my - mh, mw, mh); renderer.setScissor(mx, H - my - mh, mw, mh);
+      renderer.render(scene, mcam);
+    }
+
+    // Fuji label, or a chip at the edge when it is outside the windshield
+    const inWind = Math.abs(s.ang) <= windHalf;
+    const pk = project(0, 0, FUJI_H);
+    if (inWind && pk && pk[0] > 30 && pk[0] < W - 30) {
+      peakEl.style.display = '';
+      peakDist.textContent = '約' + Math.round(s.dist) + ' km';
+      peakEl.style.transform = `translate(${pk[0].toFixed(1)}px, ${Math.max(pk[1] + 2, 44).toFixed(1)}px) translate(-50%, -100%)`;
+    } else peakEl.style.display = 'none';
+    if (!inWind) {
+      const right = s.ang > 0, inMirror = Math.abs(s.ang) >= 180 - mirrorHalf;
+      edgeEl.hidden = false;
+      edgeEl.innerHTML = (right ? '' : '◀ ') + '<b>富士山</b> ' + dirText(s.ang) + (inMirror ? '　ミラーに映っています' : '') + (right ? ' ▶' : '');
+      edgeEl.style.left = right ? 'auto' : '12px'; edgeEl.style.right = right ? '12px' : 'auto';
+    } else edgeEl.hidden = true;
+
+    // expressway signs for the interchanges ahead
+    ics.forEach((c, j) => {
+      const e = signEls[j], aheadKm = dir === 'down' ? s.u - c.u : c.u - s.u;
+      let show = aheadKm > 1.2 && aheadKm < 42, q = null;
+      if (show) {
+        const side = dir === 'down' ? -1 : 1;                 // left shoulder for the direction of travel
+        q = project(c.x - Math.sin(c.h) * side * (ROAD_W / 2 + 0.12), c.y + Math.cos(c.h) * side * (ROAD_W / 2 + 0.12), 0.16);
+        show = !!q && q[0] > -40 && q[0] < W + 40 && q[1] < H * 0.84;
+      }
+      if (!show) { e.style.display = 'none'; return; }
+      const sc = clamp(5 / aheadKm, 0.6, 1.25);
+      e.style.display = '';
+      e.style.opacity = clamp((42 - aheadKm) / 10, 0, 1).toFixed(2);
+      e.style.zIndex = String(Math.round(1000 - aheadKm * 10));
+      e.style.transform = `translate(${q[0].toFixed(1)}px, ${q[1].toFixed(1)}px) translate(-50%, -100%) translateY(-9px) scale(${sc.toFixed(3)})`;
+    });
+  }
+
+  /* ---------- chart ---------- */
+  const chart = document.getElementById('chart'), NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; (parent || chart).appendChild(e); return e; };
+  let cg = null;                              // chart geometry + cursor elements
+  function buildChart() {
+    const cw = Math.max(280, chart.getBoundingClientRect().width || 600), narrow = cw < 560;
+    const ch = narrow ? 300 : 260, m = { l: narrow ? 58 : 76, r: 10, t: 40, b: 10 };
+    chart.setAttribute('viewBox', `0 0 ${cw} ${ch}`); chart.style.height = ch + 'px';
+    while (chart.firstChild) chart.removeChild(chart.firstChild);
+    const X = a => m.l + (a + 180) / 360 * (cw - m.l - m.r), Y = pp => m.t + pp / L * (ch - m.t - m.b);
+    const y0 = m.t, y1 = ch - m.b;
+    const defs = mk('defs', {});
+    const pat = mk('pattern', { id: 'hatch', width: 6, height: 6, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
+    mk('rect', { width: 3, height: 6, fill: 'var(--band)' }, pat);
+    mk('rect', { x: X(-windHalf), y: y0, width: X(windHalf) - X(-windHalf), height: y1 - y0, fill: 'var(--band)' });
+    mk('rect', { x: X(-180), y: y0, width: X(-180 + mirrorHalf) - X(-180), height: y1 - y0, fill: 'url(#hatch)' });
+    mk('rect', { x: X(180 - mirrorHalf), y: y0, width: X(180) - X(180 - mirrorHalf), height: y1 - y0, fill: 'url(#hatch)' });
+    for (const [a, label] of [[-180, '真後ろ'], [-90, '左 90°'], [0, '正面'], [90, '右 90°'], [180, '真後ろ']]) {
+      mk('line', { x1: X(a), x2: X(a), y1: y0, y2: y1, stroke: 'var(--rule)', 'stroke-width': a === 0 ? 1.2 : 0.8, 'stroke-dasharray': a === 0 ? '' : '2 3' });
+      mk('text', { x: X(a), y: y0 - 8, 'text-anchor': a === -180 ? 'start' : a === 180 ? 'end' : 'middle' }, null, label);
+    }
+    mk('text', { class: 'zone', x: X(0), y: y0 - 24, 'text-anchor': 'middle' }, null, 'フロントガラス');
+    if (!narrow) { mk('text', { class: 'zone', x: X(-180), y: y0 - 24, 'text-anchor': 'start' }, null, 'ミラー'); mk('text', { class: 'zone', x: X(180), y: y0 - 24, 'text-anchor': 'end' }, null, 'ミラー'); }
+    // interchange labels down the left side (greedy by priority)
+    const placed = [];
+    for (const c of [...ics].sort((a, b) => a.p - b.p)) {
+      const yy = Y(dir === 'down' ? L - c.u : c.u);
+      if (placed.some(v => Math.abs(v - yy) < 14)) continue;
+      placed.push(yy);
+      mk('text', { class: 'ic', x: m.l - 10, y: yy + 4, 'text-anchor': 'end' }, null, c.n);
+      mk('line', { x1: m.l - 5, x2: m.l, y1: yy, y2: yy, stroke: 'var(--muted)', 'stroke-width': 1 });
+    }
+    mk('line', { x1: m.l, x2: m.l, y1: y0, y2: y1, stroke: 'var(--road)', 'stroke-width': 3, 'stroke-linecap': 'round' });
+    // bearing along the whole trip; break the line where it wraps around behind the car
+    let d = '', prev = null;
+    const step = L / 600;
+    for (let k = 0; k <= 600; k++) {
+      const s = poseAt(k * step);
+      d += (prev === null || Math.abs(s.ang - prev) > 180 ? 'M' : 'L') + X(s.ang).toFixed(1) + ' ' + Y(k * step).toFixed(1);
+      prev = s.ang;
+    }
+    mk('path', { d, fill: 'none', stroke: 'var(--fuji)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+    const cur = mk('line', { x1: m.l, x2: cw - m.r, stroke: 'var(--ink)', 'stroke-width': 1 });
+    const car = mk('circle', { cx: m.l, r: 5, fill: 'var(--land)', stroke: 'var(--ink)', 'stroke-width': 2.5 });
+    const dot = mk('path', { d: 'M0 -8 L7.5 6 L-7.5 6 Z', fill: 'var(--fuji)', stroke: 'var(--land)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
+    cg = { X, Y, cur, car, dot, y0, y1 };
+    moveCursor(poseAt(p));
+  }
+  function moveCursor(s) {
+    if (!cg) return;
+    const y = cg.Y(p).toFixed(1);
+    cg.cur.setAttribute('y1', y); cg.cur.setAttribute('y2', y); cg.car.setAttribute('cy', y);
+    cg.dot.setAttribute('transform', `translate(${cg.X(s.ang).toFixed(1)} ${y})`);
+  }
+  chart.addEventListener('click', ev => {
+    if (!cg) return;
+    const r = chart.getBoundingClientRect(), y = ev.clientY - r.top;
+    setPos(clamp((y - cg.y0) / (cg.y1 - cg.y0), 0, 1) * L);
+  });
+
+  /* ---------- table ---------- */
+  function buildTable() {
+    let html = '';
+    for (let k = 0; k < 40; k++) {
+      const s = poseAt(L * k / 39);
+      html += `<tr><td class="r">${k + 1}</td><td>${sectionName(s.u)}</td><td class="r">約${Math.round(s.dist)} km</td><td>${dirText(s.ang)}</td><td>${whereText(s.ang)}</td></tr>`;
+    }
+    document.getElementById('tbody').innerHTML = html;
+  }
+
+  /* ---------- controls ---------- */
+  const slider = document.getElementById('pos'), ticks = document.getElementById('ticks');
+  const playBtn = document.getElementById('play'), bDown = document.getElementById('dirDown'), bUp = document.getElementById('dirUp');
+  slider.max = L.toFixed(1);
+  function buildTicks() {
+    ticks.textContent = '';
+    const w = ticks.getBoundingClientRect().width || 600, placed = [];
+    for (const c of [...ics].sort((a, b) => a.p - b.p)) {
+      const f = (dir === 'down' ? L - c.u : c.u) / L, x = 10 + f * (w - 20), half = c.n.length * 6.2 + 5;
+      if (placed.some(b => x - half < b[1] && x + half > b[0])) continue;
+      placed.push([x - half, x + half]);
+      const e = document.createElement('span'); e.textContent = c.n; e.style.left = x.toFixed(1) + 'px'; ticks.appendChild(e);
+    }
+  }
+  function setPos(v) { p = clamp(v, 0, L); slider.value = p.toFixed(1); dirty = true; }
+  function setPlaying(v) {
+    if (v && p >= L - 0.05) setPos(0);
+    playing = v; playBtn.textContent = v ? '❚❚ 止める' : '▶ 走る'; playBtn.setAttribute('aria-pressed', v ? 'true' : 'false');
+  }
+  function setDir(d) {
+    if (d === dir) return;
+    dir = d; p = L - p;
+    bDown.setAttribute('aria-pressed', d === 'down' ? 'true' : 'false'); bUp.setAttribute('aria-pressed', d === 'up' ? 'true' : 'false');
+    slider.value = p.toFixed(1);
+    buildTicks(); buildChart(); buildTable(); dirty = true;
+  }
+  slider.addEventListener('input', () => { setPlaying(false); p = parseFloat(slider.value); dirty = true; });
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  bDown.addEventListener('click', () => setDir('down'));
+  bUp.addEventListener('click', () => setDir('up'));
+
+  /* ---------- layout + loop ---------- */
+  function layout() {
+    W = Math.max(200, stage.clientWidth); H = Math.max(100, stage.clientHeight);
+    windHalf = Math.atan(Math.tan(VFOV / 2 * Math.PI / 180) * W / H) * 180 / Math.PI;
+    if (renderer) {
+      renderer.setSize(W, H, false);
+      cam.aspect = W / H; cam.updateProjectionMatrix();
+      mcam.updateProjectionMatrix(); mcam.projectionMatrix.elements[0] *= -1;      // a mirror swaps left and right
+    }
+    buildTicks(); buildChart(); buildTable(); dirty = true;
+  }
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (playing) {
+      p += L / TRIP_SECONDS * dt;
+      if (p >= L) { p = L; setPlaying(false); }
+      slider.value = p.toFixed(1); dirty = true;
+    }
+    if (dirty) { dirty = false; draw(); }
+    requestAnimationFrame(frame);
+  }
+
+  try {
+    if (!window.THREE) throw new Error('three.js not loaded');
+    vTmp = new THREE.Vector3();
+    initScene();
+  } catch (err) {
+    renderer = null;
+    document.getElementById('nogl').hidden = false; mirrorEl.style.display = 'none'; overlay.style.display = 'none';
+  }
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if ('ResizeObserver' in window) new ResizeObserver(layout).observe(stage); else window.addEventListener('resize', layout);
+  layout();
+  requestAnimationFrame(frame);
+  window.__drive = { setPos, setDir, get L() { return L; } };   // lets the page be driven from the console
+})();
+</script>
+</body>
+</html>
