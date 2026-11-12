@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>運転席から見る富士山</title>
-<meta name="description" content="東名・名神高速道路を走る車のフロントガラスとルームミラーに、富士山がどう見えるかを3Dで走りながら確かめる図。">
+<meta name="description" content="東名・名神高速道路を走る車のフロントガラスとルームミラーに、富士山がどう見えるかを3Dで走りながら確かめる図。杉浦康平氏のダイアグラム「右往左往する富士山の地図」のアイデアにもとづく習作。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@700&display=swap" rel="stylesheet">
@@ -50,7 +50,8 @@ main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; display: flex
 header { display: flex; flex-direction: column; gap: 8px; }
 h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 4.2vw, 36px); line-height: 1.3; margin: 0; text-wrap: balance; letter-spacing: .02em; }
 h2 { font-size: 15px; margin: 0; }
-.lead { margin: 0; max-width: 41em; color: var(--muted); }
+.lead { margin: 0; color: var(--muted); }
+.credit { margin: 0; font-size: 14px; }
 .also { margin: 0; font-weight: 500; }
 .also a { color: var(--ink); text-underline-offset: 3px; }
 button { font: inherit; color: inherit; }
@@ -102,7 +103,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 /* ---------- chart ---------- */
 .chart-block { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--rule); padding-top: 14px; }
-.chart-block p { margin: 0; color: var(--muted); font-size: 13px; max-width: 50em; }
+.chart-block p { margin: 0; color: var(--muted); font-size: 13px; }
 svg#chart { display: block; width: 100%; cursor: pointer; }
 svg#chart text { font-family: var(--font-body); fill: var(--muted); font-size: 11px; }
 svg#chart .ic { fill: var(--ink); font-size: 11.5px; font-weight: 500; }
@@ -118,7 +119,7 @@ table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabula
 th, td { text-align: left; padding: 4px 18px 4px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 th { color: var(--muted); font-weight: 500; }
 td.r, th.r { text-align: right; }
-.notes { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--muted); font-size: 13px; max-width: 50em; }
+.notes { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--muted); font-size: 13px; }
 .notes h2 { font-size: 13px; margin: 0 0 4px; color: var(--ink); }
 .notes ul { margin: 0; padding-left: 1.2em; }
 .notes a { color: inherit; }
@@ -129,6 +130,7 @@ td.r, th.r { text-align: right; }
   <header>
     <h1>運転席から見る富士山</h1>
     <p class="lead">東名・名神高速道路を走る車の、フロントガラス越しの眺めです。車はいつも正面を向いているので、道が曲がるたびに富士山のほうが左右へ動き、やがて後ろへ回ってルームミラーに移ります。</p>
+    <p class="credit">もとになっているのは、グラフィックデザイナー杉浦康平氏のダイアグラム「右往左往する富士山の地図」のアイデアです。道路をまっすぐにして富士山のほうを動かすその図を、運転席の眺めに置き換えました。</p>
     <p class="also"><a href="../">← 平面版「まっすぐな道と、動く富士山」</a></p>
   </header>
 
@@ -193,7 +195,7 @@ td.r, th.r { text-align: right; }
       <li>見やすさのために誇張しています。視点は路面から600mの高さ、道路の幅は400m、富士山の高さは2倍です。地面は平らで、富士山以外の山や建物はありません。</li>
       <li>遠い地点では実際には富士山は見えません。地球の丸みも無視した、地図上の計算です。</li>
       <li>道路・海岸線・湖は <a href="https://www.naturalearthdata.com/">Natural Earth</a>（1:1000万）の公開データです。線形は簡略化されていて、実際の道のりより短く、位置に数kmのずれがあります。看板の地名はインターチェンジ名で、位置は概略です。</li>
-      <li>着想は杉浦康平のダイアグラム「右往左往する富士山の地図」です。原図を再現したものではありません。</li>
+      <li>道路をまっすぐにして富士山のほうを動かすアイデアは、杉浦康平氏のダイアグラム「右往左往する富士山の地図」によります。運転席の眺めへの置き換えはこのページで加えたもので、原図を再現したものではありません。</li>
     </ul>
   </section>
 </main>
