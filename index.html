@@ -3,24 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>まっすぐな道と、動く富士山</title>
-<meta name="description" content="東名・名神高速道路の40地点から見た富士山の方向と距離を、地図のままの表示と、道路を直線に伸ばした表示で切り替えて見る図。杉浦康平氏のダイアグラム「右往左往する富士山の地図」のアイデアにもとづく習作。">
+<title>視点をどこに置くか</title>
+<meta name="description" content="杉浦康平氏のダイアグラム「右往左往する富士山の地図」のアイデアを動く図で確かめながら、データを人に伝えるときの視点の置き方を考える読み物。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@700&display=swap" rel="stylesheet">
 <style>
-/* Layout idea: one column. Title and switch on top, a single map stage that
-   morphs between two states, then the reading notes and the data table. */
+/* Layout idea: one reading column at the full content width. Text, then a figure
+   to operate, then text; the principle is stated once, at the end. */
 :root {
-  --bg: #eef1f2;        /* page */
-  --sea: #e4eaec;       /* stage ground */
-  --land: #f8f9f6;      /* land, label halo */
+  --bg: #eef1f2;
+  --sea: #e4eaec;       /* figure ground */
+  --land: #f8f9f6;      /* surfaces, label halo */
   --coast: #b9c4c8;
   --ink: #17212a;
   --muted: #5d6b75;
   --rule: #cfd7da;
   --road: #1c7a5b;      /* expressway sign green */
   --fuji: #d0432b;      /* vermilion */
+  --board: #141b21;     /* departure board */
+  --board-ink: #f3efe2;
   --font-display: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
   --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
   color-scheme: light;
@@ -29,439 +31,492 @@
   :root:not([data-theme="light"]) {
     --bg: #0e1418; --sea: #121a20; --land: #1b262e; --coast: #34444f;
     --ink: #e7edf0; --muted: #93a1ab; --rule: #2a3741;
-    --road: #49b890; --fuji: #ff7c5e;
+    --road: #49b890; --fuji: #ff7c5e; --board: #05080a; --board-ink: #f3efe2;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e1418; --sea: #121a20; --land: #1b262e; --coast: #34444f;
   --ink: #e7edf0; --muted: #93a1ab; --rule: #2a3741;
-  --road: #49b890; --fuji: #ff7c5e;
+  --road: #49b890; --fuji: #ff7c5e; --board: #05080a; --board-ink: #f3efe2;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
-body {
-  background: var(--bg); color: var(--ink);
-  font-family: var(--font-body); font-size: 15px; line-height: 1.75;
-  -webkit-font-smoothing: antialiased;
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.9; -webkit-font-smoothing: antialiased; }
+main { max-width: 1040px; margin: 0 auto; padding: 36px 20px 64px; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5.4vw, 48px); line-height: 1.25; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+.sub { margin: 0; font-size: 17px; font-weight: 500; }
+.byline { margin: 0; color: var(--muted); font-size: 14px; }
+section { display: flex; flex-direction: column; gap: 16px; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(21px, 3.2vw, 27px); line-height: 1.4; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 8px 0 0; }
+p { margin: 0; }
+a { color: inherit; text-underline-offset: 3px; }
+ul, ol { margin: 0; padding-left: 1.4em; }
+li + li { margin-top: 4px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fuji); outline-offset: 3px; }
+.small { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* prediction */
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choices button { text-align: left; padding: 10px 16px; border-radius: 8px; border: 1.5px solid var(--rule); background: var(--land); cursor: pointer; }
+.choices button[aria-pressed="true"] { border-color: var(--ink); font-weight: 700; }
+.answer { border-left: 4px solid var(--fuji); padding: 4px 0 4px 16px; }
+.answer[hidden] { display: none; }
+
+/* embedded figures */
+iframe { display: block; width: 100%; border: 0; background: var(--bg); }
+
+/* controls shared by the figures */
+.ctl { display: flex; flex-direction: column; gap: 2px; }
+.ctl label { font-size: 13px; color: var(--muted); }
+.ctl output { font-weight: 700; font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--road); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--road); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%; background: var(--land); border: 3px solid var(--ink); }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--land); border: 3px solid var(--ink); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; align-self: flex-start; }
+.seg button { padding: 6px 15px; border: 0; background: transparent; cursor: pointer; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 700; }
+
+/* 2 x 2 */
+.matrix { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 10px; }
+.colh, .rowh { font-size: 13px; font-weight: 700; color: var(--muted); display: flex; align-items: center; justify-content: center; text-align: center; }
+.rowh { writing-mode: vertical-rl; letter-spacing: .08em; }
+.panel { margin: 0; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--sea); display: flex; flex-direction: column; }
+.panel figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 8px 12px; background: var(--land); border-bottom: 1px solid var(--rule); font-weight: 700; font-size: 14px; line-height: 1.5; }
+.panel figcaption span { font-weight: 400; font-size: 12px; color: var(--muted); }
+.panel figcaption .chips { display: none; }
+.panel svg { display: block; width: 100%; height: auto; }
+.panel.none { border-style: dashed; background: transparent; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.7; }
+@media (max-width: 700px) {
+  .matrix { grid-template-columns: 1fr; }
+  .colh, .rowh { display: none; }
+  .panel figcaption .chips { display: inline; }
 }
-main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; display: flex; flex-direction: column; gap: 18px; }
-header { display: flex; flex-direction: column; gap: 8px; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 4.2vw, 36px); line-height: 1.3; margin: 0; text-wrap: balance; letter-spacing: .02em; }
-.lead { margin: 0; color: var(--muted); }
-.credit { margin: 0; font-size: 14px; }
-.also { margin: 0; font-weight: 500; }
-.also a { color: var(--ink); text-underline-offset: 3px; }
+svg text { font-family: var(--font-body); fill: var(--ink); }
+.halo { paint-order: stroke; stroke: var(--land); stroke-width: 3.5px; stroke-linejoin: round; }
 
-.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.side { font: inherit; font-weight: 500; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; border-radius: 6px; }
-.side[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
-.switch {
-  position: relative; width: 60px; height: 32px; flex: none; padding: 0; cursor: pointer;
-  border: 1.5px solid var(--ink); border-radius: 999px; background: var(--land);
-  transition: background .25s;
-}
-.switch::after {
-  content: ""; position: absolute; top: 3px; left: 3px; width: 23px; height: 23px; border-radius: 50%;
-  background: var(--road); transition: transform .25s cubic-bezier(.4,0,.2,1), background .25s;
-}
-.switch[aria-checked="true"]::after { transform: translateX(28px); background: var(--fuji); }
-.switch:focus-visible, .side:focus-visible, summary:focus-visible { outline: 2px solid var(--fuji); outline-offset: 3px; }
+table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { text-align: left; padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { color: var(--muted); font-weight: 500; font-size: 13px; }
+tbody th { font-weight: 500; }
+.scroll { overflow-x: auto; }
+.scroll table { min-width: 560px; }
+.kept { color: var(--road); font-weight: 700; }
+.lost { color: var(--muted); }
 
-.stage-wrap { position: relative; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--sea); aspect-ratio: 16 / 10; }
-@media (max-width: 600px) { .stage-wrap { aspect-ratio: 4 / 5; } }
-svg#stage { display: block; width: 100%; height: 100%; touch-action: pan-y; }
-#land { fill: var(--land); stroke: var(--coast); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-#lakes { fill: var(--sea); stroke: var(--coast); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.sight { stroke: var(--muted); stroke-width: .8; stroke-dasharray: 1.5 3.5; stroke-linecap: round; opacity: .75; }
-.sight.hl { stroke: var(--fuji); stroke-width: 1.6; stroke-dasharray: none; opacity: 1; }
-#road { fill: none; stroke: var(--road); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
-.stop { fill: var(--land); stroke: var(--road); stroke-width: 1.3; }
-.stop.hl { fill: var(--road); }
-#kite { fill: none; stroke: var(--fuji); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
-.fj { fill: var(--fuji); stroke: var(--land); stroke-width: 1.5; }
-.fj.hl { stroke: var(--ink); }
-#summit path { fill: var(--fuji); stroke: var(--land); stroke-width: 1.5; stroke-linejoin: round; }
-text { font-family: var(--font-body); fill: var(--ink); paint-order: stroke; stroke: var(--land); stroke-width: 3.5px; stroke-linejoin: round; }
-.ic { font-size: 12px; font-weight: 500; text-anchor: middle; }
-.num { font-size: 10px; font-weight: 700; text-anchor: middle; fill: var(--fuji); font-variant-numeric: tabular-nums; }
-.summit-label { font-size: 13px; font-weight: 700; text-anchor: middle; }
-.note { font-size: 11px; fill: var(--muted); }
-#scale line { stroke: var(--ink); stroke-width: 1.2; }
-#scale text { font-size: 10.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
-@media (max-width: 600px) { .ic { font-size: 11px; } }
+/* timetable */
+.tt { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }
+.tt .wide { grid-column: 1 / -1; }
+@media (max-width: 700px) { .tt { grid-template-columns: 1fr; } }
+.board { background: var(--board); color: var(--board-ink); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; font-variant-numeric: tabular-nums; }
+.board .now { font-size: 13px; opacity: .75; }
+.board .row { display: grid; grid-template-columns: 3.2em 1fr auto; gap: 10px; align-items: baseline; border-top: 1px solid rgba(255,255,255,.14); padding-top: 8px; }
+.board .type { font-size: 13px; font-weight: 700; padding: 0 6px; border-radius: 3px; text-align: center; border: 1px solid currentColor; }
+.board .type.rapid { background: var(--board-ink); color: var(--board); border-color: var(--board-ink); }
+.board .dest { font-size: 14px; }
+.board .wait { font-size: 22px; font-weight: 700; }
+.board .wait small { font-size: 12px; font-weight: 500; opacity: .75; margin-left: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 12.5px; }
+.legend li { display: flex; align-items: center; gap: 6px; margin: 0; }
 
-.tip {
-  position: absolute; pointer-events: none; z-index: 2; min-width: 150px; max-width: 230px;
-  background: var(--land); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px;
-  padding: 8px 11px; font-size: 12.5px; line-height: 1.55; box-shadow: 0 6px 20px rgba(0,0,0,.14);
-  opacity: 0; transition: opacity .12s;
-}
-.tip.on { opacity: 1; }
-.tip b { font-weight: 700; }
-.tip .k { color: var(--muted); }
-.tip .v { font-variant-numeric: tabular-nums; }
-
-.caption { margin: 0; min-height: 3.5em; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
-.legend li { display: flex; align-items: center; gap: 7px; }
-.legend svg { flex: none; }
-
-details { border-top: 1px solid var(--rule); padding-top: 12px; }
-summary { cursor: pointer; font-weight: 700; border-radius: 4px; }
-.table-scroll { overflow-x: auto; margin-top: 10px; }
-table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 420px; }
-th, td { text-align: left; padding: 4px 18px 4px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-th { color: var(--muted); font-weight: 500; }
-td.r, th.r { text-align: right; }
-
-.notes { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--muted); font-size: 13px; }
-.notes h2 { font-size: 13px; margin: 0 0 4px; color: var(--ink); }
-.notes ul { margin: 0; padding-left: 1.2em; }
-.notes li + li { margin-top: 2px; }
-.notes a { color: inherit; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 2.2em 1fr; margin: 0; }
+.steps li::before { content: counter(s); font-family: var(--font-display); font-size: 22px; line-height: 1.5; color: var(--fuji); }
+.steps b { display: block; }
+.principle { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 4.4vw, 40px); line-height: 1.45; margin: 8px 0; text-wrap: balance; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); padding: 22px 0; }
+footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>まっすぐな道と、動く富士山</h1>
-    <p class="lead">東京から西宮まで、東名・名神高速道路の40地点から見て、富士山はどの方向に、どれくらいの距離にあるか。道路のほうをまっすぐに伸ばすと、富士山の位置が地点ごとに変わります。</p>
-    <p class="credit">道路をまっすぐにして富士山のほうを動かすアイデアは、グラフィックデザイナー杉浦康平氏のダイアグラム「右往左往する富士山の地図」のものです。このページは、そのアイデアを公開データで計算し直し、切り替えて見られるようにした習作です。</p>
-    <p class="also"><a href="drive/">運転席から見る3D版 →</a></p>
+    <h1>視点をどこに置くか</h1>
+    <p class="sub">杉浦康平「右往左往する富士山の地図」から考える、データの描き方</p>
+    <p class="byline">矢崎裕一</p>
+    <p>グラフィックデザイナーの杉浦康平氏に、「右往左往する富士山の地図」というダイアグラムがあります。東名高速道路を走るとき、富士山の見える方向と距離がどう変わるかを描いた図です。私は講演や講義で、この図をよく引き合いに出してきました。視点をどこに置くかで、描かれるものがまったく変わることを、はっきり見せてくれるからです。</p>
+    <p>このページでは、そのアイデアを公開データで計算し直した図を動かしながら、データを人に伝えるときの視点の置き方を考えます。図は原図を再現したものではありません。</p>
   </header>
 
-  <div class="controls">
-    <button type="button" class="side" id="btn-map" aria-pressed="true">地図のまま</button>
-    <button type="button" class="switch" id="toggle" role="switch" aria-checked="false" aria-label="道路をまっすぐに伸ばす"></button>
-    <button type="button" class="side" id="btn-straight" aria-pressed="false">道路をまっすぐに</button>
-  </div>
-
-  <div class="stage-wrap" id="wrap">
-    <svg id="stage" role="img" aria-label="東名・名神高速道路と富士山の位置関係を示す図。スイッチで地図表示と道路を直線化した表示を切り替えられる。"></svg>
-    <div class="tip" id="tip" role="status"></div>
-  </div>
-
-  <p class="caption" id="caption" aria-live="polite"></p>
-
-  <ul class="legend" aria-label="凡例">
-    <li><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="var(--road)" stroke-width="3.5" stroke-linecap="round"/><circle cx="13" cy="5" r="2.6" fill="var(--land)" stroke="var(--road)" stroke-width="1.3"/></svg>高速道路と40地点（道のり等間隔、1が東京、40が西宮）</li>
-    <li><svg width="26" height="10" aria-hidden="true"><line x1="2" y1="5" x2="24" y2="5" stroke="var(--muted)" stroke-width="1" stroke-dasharray="1.5 3.5" stroke-linecap="round"/></svg>各地点から富士山への直線</li>
-    <li><svg width="26" height="12" aria-hidden="true"><polyline points="2,9 9,3 16,8 24,4" fill="none" stroke="var(--fuji)" stroke-width="1.6"/><circle cx="16" cy="8" r="3" fill="var(--fuji)"/></svg>各地点から見た富士山の位置</li>
-  </ul>
-
-  <details>
-    <summary>40地点の数値を表で見る</summary>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th class="r">地点</th><th>区間</th><th class="r">富士山まで</th><th>方向（西行きの進行方向に対して）</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
+  <section aria-labelledby="h-predict">
+    <h2 id="h-predict">まず、予想してください</h2>
+    <p>東京から西宮まで、東名・名神高速道路を走ります。この道路を、まっすぐな一本の線に伸ばします。道路上の各地点から富士山への方向と距離は、そのまま変えません。すると富士山は、まっすぐな線に対してどこに現れるでしょうか。</p>
+    <div class="choices" role="group" aria-label="予想">
+      <button type="button" data-c="a" aria-pressed="false">いつも線の同じ側にあって、近づいて遠ざかるだけ</button>
+      <button type="button" data-c="b" aria-pressed="false">線の片側と反対側を、何度も行き来する</button>
+      <button type="button" data-c="c" aria-pressed="false">ほとんど同じ場所から動かない</button>
     </div>
-  </details>
+    <p>選んだら、下の図のスイッチを入れて確かめてください。</p>
+    <iframe id="f-flat" src="flat/?embed=1" title="平面版：地図のままの表示と、道路を直線に伸ばした表示の切り替え" height="820" loading="lazy"></iframe>
+    <div class="answer" id="answer" hidden></div>
+  </section>
 
-  <section class="notes">
-    <h2>計算とデータ</h2>
+  <section aria-labelledby="h-fixed">
+    <h2 id="h-fixed">動いたのは、何を固定したかが変わったから</h2>
+    <p>地図では、富士山は一点に止まっています。道路をまっすぐにすると、動くのは富士山のほうです。どちらも同じデータ、つまり各地点から富士山への方向と距離を描いています。違うのは、何を固定したかだけです。地図は大地を固定しました。まっすぐにした図は、走る人の進行方向を固定しています。</p>
+  </section>
+
+  <section aria-labelledby="h-seat">
+    <h2 id="h-seat">運転席に座ってみる</h2>
+    <p>まっすぐにした図は、運転席からの眺めとも言えます。車がどちらを向いていても、運転する人はいつも正面を見ているからです。そこで、同じ計算を運転席の眺めにしました。「走る」を押すか、スライダーを動かしてください。</p>
+    <iframe id="f-drive" src="drive/?embed=1" title="3D版：運転席から見た富士山" height="1100" loading="lazy"></iframe>
+    <p>走らせてみると、運転席の眺めの弱点も分かります。</p>
     <ul>
-      <li>方向は、各地点の前後数kmの道路の向きを基準に測っています。距離は富士山頂（剣ヶ峰）までの直線距離です。直線化しても、この方向と距離は変えていません。</li>
-      <li>地図は富士山頂を中心とする正距方位図法です。富士山からの距離と方位がそのまま図上に表れます。</li>
-      <li>道路・海岸線・湖は <a href="https://www.naturalearthdata.com/">Natural Earth</a>（1:1000万）の公開データです。線形は簡略化されていて、実際の道のりより短く、位置に数kmのずれがあります。地名はインターチェンジ名で、位置は概略です。</li>
-      <li>遠い地点では、実際には富士山が見えない場所も含みます。方向と距離は地図上の計算です。</li>
-      <li>直線化した図は、いつも正面を向いている車から見た配置でもあります。同じ計算を運転席の眺めにしたのが <a href="drive/">3D版「運転席から見る富士山」</a> です。</li>
-      <li>アイデアは杉浦康平氏のダイアグラム「右往左往する富士山の地図」によります。このページは原図を再現したものではありません。地点の取り方や道路の精度が原図と違うため、形は一致しません。</li>
+      <li><b>見えるのは「いま」だけです。</b>全線を通して富士山がどう動いたかは、走り終えても頭に残りません。そのため、方向の推移をまとめた図を下に足す必要がありました。</li>
+      <li><b>誰の席に座らせるかで、絵が変わります。</b>下りでは、富士インターチェンジを過ぎると富士山は後ろへ回り、その先はルームミラーの中か斜め後ろです。上りに切り替えると、正面に見える時間がずっと長くなります。</li>
+      <li><b>自分の見ている景色がふつうなのか、例外なのかは分かりません。</b>比べるには、全体を見渡す図が要ります。</li>
     </ul>
   </section>
+
+  <section aria-labelledby="h-matrix">
+    <h2 id="h-matrix">3つの図を並べる</h2>
+    <p>ここまでの3つの図は、2つの問いで整理できます。誰の座標系で描くか。どこから眺めるか。スライダーを動かすと、同じ地点を3つの図で同時に追えます。</p>
+    <div class="ctl">
+      <label for="mpos">道路上の位置（下り、東京 → 西宮）　<output id="mout"></output></label>
+      <input type="range" id="mpos" min="0" max="100" step="0.5" value="60">
+    </div>
+    <div class="matrix">
+      <div></div><div class="colh">大地の座標系</div><div class="colh">走る人の座標系</div>
+      <div class="rowh">上から見渡す</div>
+      <figure class="panel"><figcaption>地図 <span class="chips">大地の座標系 × 上から見渡す</span></figcaption><svg id="p-map" viewBox="0 0 480 330" role="img" aria-label="地図。道路と富士山、現在地を示す。"></svg></figure>
+      <figure class="panel"><figcaption>まっすぐにした図 <span class="chips">走る人の座標系 × 上から見渡す</span></figcaption><svg id="p-str" viewBox="0 0 480 330" role="img" aria-label="道路を直線に伸ばした図。現在地から見た富士山の位置を示す。"></svg></figure>
+      <div class="rowh">中から見る</div>
+      <div class="panel none">この組み合わせの図は作っていません。<br>たとえば、ずっと北を向いたまま立っている人の眺めがこれにあたります。</div>
+      <figure class="panel"><figcaption>運転席 <span class="chips">走る人の座標系 × 中から見る</span></figcaption><svg id="p-seat" viewBox="0 0 480 330" role="img" aria-label="運転席の眺めの模式図。フロントガラスとルームミラーの中の富士山を示す。"></svg></figure>
+    </div>
+    <p>右往左往が一目で分かるのは、右上の図だけです。地図では富士山は動きません。運転席では、動きは見えても全体が残りません。杉浦氏の図は運転席からの眺めではなく、走る人の座標系で描いたものを、上から見渡しています。</p>
+
+    <h3>保ったものと、捨てたもの</h3>
+    <p>座標系を変えるとは、何を保ち、何を捨てるかを決めることです。まっすぐにした図は、富士山までの距離と、道路に対する角度を保ちました。その代わりに、方角と、海岸線や地形との位置関係を捨てています。下の表は、上のスライダーの地点での値です。</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>地図</th><th>まっすぐにした図</th><th>運転席</th></tr></thead>
+        <tbody>
+          <tr><th>富士山までの距離</th><td class="kept" id="k-d1"></td><td class="kept" id="k-d2"></td><td class="kept" id="k-d3"></td></tr>
+          <tr><th>道路に対する角度</th><td class="kept" id="k-a1"></td><td class="kept" id="k-a2"></td><td class="kept" id="k-a3"></td></tr>
+          <tr><th>富士山の方角</th><td class="kept" id="k-c1"></td><td class="lost">読み取れない</td><td class="lost">読み取れない</td></tr>
+          <tr><th>海岸線や地形との位置関係</th><td class="kept">ある</td><td class="lost">ない</td><td class="lost">近くだけ</td></tr>
+          <tr><th>全線を通した動き</th><td class="lost">富士山は動かない</td><td class="kept">一目で分かる</td><td class="lost">いまの位置だけ</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-train">
+    <h2 id="h-train">地図ではないデータで、同じことをする</h2>
+    <p>同じことは、地図ではないデータにも言えます。鉄道の時刻表で試します。駅を選び、時刻を動かしてください。</p>
+    <div class="seg" id="st-seg" role="group" aria-label="自分がいる駅"></div>
+    <div class="ctl">
+      <label for="tnow">いまの時刻　<output id="tout"></output></label>
+      <input type="range" id="tnow" min="420" max="530" step="1" value="451">
+    </div>
+    <div class="tt">
+      <figure class="panel wide"><figcaption>ダイヤグラム <span>運行する側の座標系 × 上から見渡す</span></figcaption><svg id="t-dia" viewBox="0 0 960 300" role="img" aria-label="ダイヤグラム。横軸が時刻、縦軸が駅で、列車を線で示す。"></svg></figure>
+      <figure class="panel"><figcaption>待ち時間の図 <span>ホームに立つ人の座標系 × 上から見渡す</span></figcaption><svg id="t-saw" viewBox="0 0 540 300" role="img" aria-label="ホームに着く時刻ごとの待ち時間。"></svg></figure>
+      <figure class="panel"><figcaption>発車標 <span>ホームに立つ人の座標系 × 中から見る</span></figcaption><div class="board" id="t-board" aria-live="off"></div></figure>
+    </div>
+    <ul class="legend">
+      <li><svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="23" y2="5" stroke="var(--ink)" stroke-width="1.4"/></svg>各駅停車</li>
+      <li><svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="23" y2="5" stroke="var(--road)" stroke-width="2.6"/></svg>快速（さくら台とかわべは通過）</li>
+      <li><svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="23" y2="5" stroke="var(--fuji)" stroke-width="1.8"/></svg>いまの時刻、自分の駅</li>
+    </ul>
+    <p class="small">説明のために作った架空の路線とダイヤです。みなと発やまのうえ行きの、朝7時から9時までを描いています。</p>
+    <p>ダイヤグラムは、運行する側の図です。すべての列車と駅が一望できます。けれどもホームに立つ人は、自分の駅の線と、いまの時刻の線が交わるところを、自分で探さなければなりません。</p>
+    <p>発車標は、ホームに立つ人の図です。原点は「いま、この駅」。単位は時刻ではなく「あと何分」です。ただし運転席と同じで、見えるのは「いま」だけです。</p>
+    <p>待ち時間の図は、ホームに立つ人の座標系のまま、朝の2時間を見渡したものです。何時にホームへ着くと長く待つのかが、一目で分かります。駅を「さくら台」に変えると、快速が止まらないぶん山が高くなります。<span id="t-note"></span></p>
+    <p>ここでも、保ったものと捨てたものがあります。保ったのは、自分の駅を出る列車の時刻です。捨てたのは、ほかの駅のことと、列車どうしの関係です。</p>
+  </section>
+
+  <section aria-labelledby="h-steps">
+    <h2 id="h-steps">自分のデータで描き直すとき</h2>
+    <p>富士山と時刻表でやったことを、手順にするとこうなります。</p>
+    <ol class="steps">
+      <li><div><b>読み手は誰か。どの席に座らせるか。</b>下りと上り、中央駅とさくら台駅で、絵は変わります。席は描く人が決めることになります。</div></li>
+      <li><div><b>原点をどこに置くか。</b>読み手がいまいる場所、いまの時刻、読み手自身の値。</div></li>
+      <li><div><b>軸と単位を何にするか。</b>東西南北ではなく前後左右。時刻ではなく「あと何分」。</div></li>
+      <li><div><b>何を保ち、何を捨てるか。</b>保つものを決めないと、描き直した図は元のデータと別のものになります。</div></li>
+      <li><div><b>描き直したものを、見渡せる形にする。</b>「いま」だけを見せて終わらせない。</div></li>
+    </ol>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>問い</th><th>富士山</th><th>時刻表</th></tr></thead>
+        <tbody>
+          <tr><th>読み手</th><td>高速道路を走る人</td><td>ホームに立つ人</td></tr>
+          <tr><th>原点</th><td>いま走っている地点</td><td>いま、この駅</td></tr>
+          <tr><th>軸と単位</th><td>進行方向に対する前後左右、富士山までの距離</td><td>あと何分</td></tr>
+          <tr><th>保ったもの</th><td>富士山までの距離、道路に対する角度</td><td>自分の駅を出る列車の時刻</td></tr>
+          <tr><th>捨てたもの</th><td>方角、海岸線や地形</td><td>ほかの駅、列車どうしの関係</td></tr>
+          <tr><th>見渡す形</th><td>まっすぐにした図</td><td>待ち時間の図</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-end">
+    <h2 id="h-end">俯瞰か、運転席か</h2>
+    <p>地図は俯瞰の視点で、全体を管理する側、いわば行政の視点です。運転席は主観の視点です。一般の人にデータを伝えようとするなら、俯瞰よりも運転席の視点で描くべきではないか。私はそう考えてきました。</p>
+    <p>ただ、運転席に座らせるだけでは「いま」しか見えません。自分の景色がふつうなのかどうかも分かりません。杉浦氏の図が教えてくれるのは、その先です。走る人の座標系で描き直し、それを上から見渡せるようにする。入口は運転席で、出口は俯瞰です。</p>
+    <p class="principle">読み手の座標系で描き直してから、俯瞰させる。</p>
+  </section>
+
+  <footer class="small">
+    <p>図を単体で開く：<a href="flat/">平面版「まっすぐな道と、動く富士山」</a>　<a href="drive/">3D版「運転席から見る富士山」</a></p>
+    <p>道路をまっすぐにして富士山のほうを動かすアイデアは、杉浦康平氏のダイアグラム「右往左往する富士山の地図」によります。このページの図は、公開データから計算し直した習作です。地点の取り方や道路の精度が原図と違うため、形は一致しません。</p>
+    <p>道路・海岸線・湖は <a href="https://www.naturalearthdata.com/">Natural Earth</a>（1:1000万）の公開データです。線形は簡略化されていて、実際の道のりより短く、位置に数kmのずれがあります。遠い地点では実際には富士山は見えません。方向と距離は地図上の計算です。計算の詳細とソースコードは <a href="https://github.com/n1n9-jp/fuji-from-the-road">GitHub のリポジトリ</a>にあります。</p>
+  </footer>
 </main>
 
 <script src="data.js"></script>
 <script>
-const D = window.FUJI_DATA;
-
 (() => {
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.getElementById('stage');
-  const wrap = document.getElementById('wrap');
-  const tip = document.getElementById('tip');
-  const mk = (tag, attrs, parent) => {
-    const e = document.createElementNS(NS, tag);
-    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
-    (parent || svg).appendChild(e);
-    return e;
-  };
+  const D = window.FUJI_DATA, NS = 'http://www.w3.org/2000/svg';
+  const mk = (parent, tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; parent.appendChild(e); return e; };
+  const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = id => document.getElementById(id);
 
-  /* ---------- geometry (km; x east, y north; Fuji summit at the origin) ---------- */
+  /* ---------- embedded pages report their height ---------- */
+  window.addEventListener('message', ev => {
+    if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'fuji-embed-height') return;
+    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === ev.source) f.style.height = ev.data.height + 'px';
+  });
+
+  /* ---------- road geometry (km; x east, y north; Fuji summit at the origin) ---------- */
   const P = D.route, N = P.length;            // west (Nishinomiya) -> east (Tokyo)
-  const ds = new Float64Array(N - 1), al = new Float64Array(N - 1), U = new Float64Array(N);
+  const al = new Float64Array(N - 1), U = new Float64Array(N), hv = new Float64Array(N);
   for (let i = 0, prev = null; i < N - 1; i++) {
     const dx = P[i + 1][0] - P[i][0], dy = P[i + 1][1] - P[i][1];
-    ds[i] = Math.hypot(dx, dy);
     let a = Math.atan2(dy, dx);
     if (prev !== null) { while (a - prev > Math.PI) a -= 2 * Math.PI; while (a - prev < -Math.PI) a += 2 * Math.PI; }
-    al[i] = prev = a;
-    U[i + 1] = U[i] + ds[i];
+    al[i] = prev = a; U[i + 1] = U[i] + Math.hypot(dx, dy);
   }
-  const hv = new Float64Array(N);             // heading of the road at each vertex
   for (let i = 0; i < N; i++) hv[i] = i === 0 ? al[0] : i === N - 1 ? al[N - 2] : (al[i - 1] + al[i]) / 2;
-  let anchor = 0;                             // the vertex closest to Fuji stays put while the road unbends
-  for (let i = 1; i < N; i++) if (Math.hypot(P[i][0], P[i][1]) < Math.hypot(P[anchor][0], P[anchor][1])) anchor = i;
-
-  const RX = new Float64Array(N), RY = new Float64Array(N), KX = new Float64Array(N), KY = new Float64Array(N);
-  /* t = 0: map as it is. t = 1: curvature removed. Arc length is preserved throughout,
-     and each point carries its own copy of Fuji at a fixed distance and relative bearing. */
-  function compute(t) {
-    const k = 1 - t;
-    RX[anchor] = P[anchor][0]; RY[anchor] = P[anchor][1];
-    for (let i = anchor; i < N - 1; i++) { const th = k * al[i]; RX[i + 1] = RX[i] + ds[i] * Math.cos(th); RY[i + 1] = RY[i] + ds[i] * Math.sin(th); }
-    for (let i = anchor - 1; i >= 0; i--) { const th = k * al[i]; RX[i] = RX[i + 1] - ds[i] * Math.cos(th); RY[i] = RY[i + 1] - ds[i] * Math.sin(th); }
-    for (let i = 0; i < N; i++) {
-      const r = -t * hv[i], c = Math.cos(r), s = Math.sin(r), wx = -P[i][0], wy = -P[i][1];
-      KX[i] = RX[i] + c * wx - s * wy; KY[i] = RY[i] + s * wx + c * wy;
-    }
+  const L = U[N - 1];
+  function locate(u) {
+    u = clamp(u, 0, L);
+    let lo = 0, hi = N - 2;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (U[m] <= u) lo = m; else hi = m - 1; }
+    const f = (u - U[lo]) / (U[lo + 1] - U[lo]);
+    return { x: lerp(P[lo][0], P[lo + 1][0], f), y: lerp(P[lo][1], P[lo + 1][1], f), h: lerp(hv[lo], hv[lo + 1], f) };
   }
-
-  const NSTOP = 40;
-  const stops = Array.from({ length: NSTOP }, (_, k) => {
-    const i = Math.round((N - 1) * (1 - k / (NSTOP - 1)));   // k = 0 is Tokyo
-    const wx = -P[i][0], wy = -P[i][1], h = hv[i];
-    const along = wx * Math.cos(h) + wy * Math.sin(h), left = -wx * Math.sin(h) + wy * Math.cos(h);
-    const ang = Math.atan2(left, -along) * 180 / Math.PI;      // westbound driver: + is to the right
-    return { k, i, dist: Math.hypot(wx, wy), ang };
-  });
-  const ics = D.ics.map(c => { let i = 0; for (let j = 1; j < N; j++) if (Math.abs(U[j] - c.u) < Math.abs(U[i] - c.u)) i = j; return { ...c, i }; });
-  const icsEW = [...ics].sort((a, b) => b.u - a.u);           // Tokyo first
-  function sectionName(i) {
-    const u = U[i];
-    for (const c of icsEW) if (Math.abs(c.u - u) < 3) return c.n + '付近';
-    for (let j = 0; j < icsEW.length - 1; j++) if (u <= icsEW[j].u && u >= icsEW[j + 1].u) return icsEW[j].n + '–' + icsEW[j + 1].n + '間';
+  /* pp = km travelled from Tokyo (westbound). Returns the same quantities in three frames. */
+  function pose(pp) {
+    const u = L - pp, q = locate(u), wx = -q.x, wy = -q.y;
+    const alongE = wx * Math.cos(q.h) + wy * Math.sin(q.h), leftE = -wx * Math.sin(q.h) + wy * Math.cos(q.h);
+    return { u, x: q.x, y: q.y, dist: Math.hypot(wx, wy),
+      ang: Math.atan2(leftE, -alongE) * 180 / Math.PI,          // westbound driver: + is to the right
+      kx: u + alongE, ky: leftE,                                 // Fuji in the straightened figure
+      compass: (Math.atan2(wx, wy) * 180 / Math.PI + 360) % 360 };
+  }
+  const ics = [...D.ics].sort((a, b) => b.u - a.u);              // Tokyo first
+  function sectionName(u) {
+    for (const c of ics) if (Math.abs(c.u - u) < 3) return c.n + '付近';
+    for (let j = 0; j < ics.length - 1; j++) if (u <= ics[j].u && u >= ics[j + 1].u) return ics[j].n + '–' + ics[j + 1].n + '間';
     return '';
   }
   function dirText(a) {
     const m = Math.abs(a);
     if (m < 8) return 'ほぼ正面';
     if (m > 172) return 'ほぼ真後ろ';
-    return (a > 0 ? '右 ' : '左 ') + Math.round(m) + '°' + (m > 90 ? '（後ろ寄り）' : '');
+    return (a > 0 ? '右' : '左') + (m > 90 ? '後ろ ' : ' ') + Math.round(m) + '°';
   }
-  stops.forEach(s => { s.sec = sectionName(s.i); s.dir = dirText(s.ang); });
+  const WINDS = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東', '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西'];
+  const windName = deg => WINDS[Math.round(deg / 22.5) % 16];
 
-  /* ---------- table ---------- */
-  document.getElementById('tbody').innerHTML = stops.map(s =>
-    `<tr><td class="r">${s.k + 1}</td><td>${s.sec}</td><td class="r">約${Math.round(s.dist)} km</td><td>${s.dir}</td></tr>`).join('');
-
-  /* ---------- scene ---------- */
-  const ringPath = rings => rings.map(r => 'M' + r.map(p => p[0] + ' ' + p[1]).join('L') + 'Z').join('');
-  const gGeo = mk('g');
-  mk('path', { id: 'land', d: ringPath(D.land) }, gGeo);
-  mk('path', { id: 'lakes', d: ringPath(D.lakes) }, gGeo);
-  const gSight = mk('g');
-  const sightEls = stops.map(() => mk('line', { class: 'sight' }, gSight));
-  const roadEl = mk('path', { id: 'road' });
-  const gStops = mk('g');
-  const stopEls = stops.map(() => mk('circle', { class: 'stop', r: 2.6 }, gStops));
-  const gKite = mk('g');
-  const kiteEl = mk('path', { id: 'kite' }, gKite);
-  const fjEls = stops.map(() => mk('circle', { class: 'fj', r: 3.3 }, gKite));
-  const gSummit = mk('g', { id: 'summit' });
-  mk('path', { d: 'M0 -9 L9.5 7 L-9.5 7 Z' }, gSummit);
-  const summitLabel = mk('text', { class: 'summit-label', y: -15 }, gSummit); summitLabel.textContent = '富士山';
-  const gIc = mk('g');
-  const icEls = ics.map(c => { const e = mk('text', { class: 'ic' }, gIc); e.textContent = c.n; return e; });
-  const gNum = mk('g');
-  const NUMBERED = new Set([1, 5, 10, 15, 20, 25, 30, 35, 40]);
-  const numEls = stops.map(s => { const e = mk('text', { class: 'num' }, gNum); e.textContent = s.k + 1; return e; });
-  const gNote = mk('g');
-  const noteUp = mk('text', { class: 'note' }, gNote); noteUp.textContent = '↑ 西へ走る車の右手';
-  const noteDn = mk('text', { class: 'note' }, gNote); noteDn.textContent = '↓ 左手';
-  const gScale = mk('g', { id: 'scale' });
-  const scaleLine = mk('line', {}, gScale);
-  const scaleText = mk('text', {}, gScale); scaleText.textContent = '100 km';
-
-  /* ---------- camera ---------- */
-  let W = 800, H = 500, camA, camB, icVis = [], icOff = [], rStop = 2.6, rFj = 3.3;
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const sstep = (a, b, x) => { const v = Math.min(1, Math.max(0, (x - a) / (b - a))); return v * v * (3 - 2 * v); };
-  function fit(x0, y0, x1, y1, pad) {
-    const z = Math.min((W - pad.l - pad.r) / (x1 - x0), (H - pad.t - pad.b) / (y1 - y0));
-    return { z, cx: (x0 + x1) / 2 + (pad.r - pad.l) / 2 / z, cy: (y0 + y1) / 2 + (pad.b - pad.t) / 2 / z };
-  }
-  function extent(arrs) {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const [xs, ys] of arrs) for (let i = 0; i < xs.length; i++) { if (xs[i] < x0) x0 = xs[i]; if (xs[i] > x1) x1 = xs[i]; if (ys[i] < y0) y0 = ys[i]; if (ys[i] > y1) y1 = ys[i]; }
-    return [x0, y0, x1, y1];
-  }
-  function icOffset(c, w, view, fs) {
-    const side = view === 1 ? 's' : c.side;
-    if (side === 'n') return [0, -10];
-    if (side === 's') return [0, fs + 8];
-    if (side === 'e') return [w / 2 + 9, fs * 0.35];
-    return [-w / 2 - 9, fs * 0.35];
-  }
-  function layout() {
-    const r = wrap.getBoundingClientRect();
-    W = Math.max(280, r.width); H = Math.max(240, r.height);
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const narrow = W < 560, fs = narrow ? 11 : 12;
-    compute(0);
-    const eA = extent([[RX, RY], [[0], [0]]]);
-    camA = fit(eA[0], eA[1], eA[2], eA[3], { l: 34, r: 34, t: 56, b: 56 });
-    compute(1);
-    const eB = extent([[RX, RY], [stops.map(s => KX[s.i]), stops.map(s => KY[s.i])]]);
-    camB = fit(eB[0], eB[1], eB[2], eB[3], { l: 30, r: 30, t: 34, b: 48 });
-    rStop = narrow ? 1.9 : 2.6; rFj = narrow ? 2.8 : 3.3;
-    stopEls.forEach((e, k) => e.setAttribute('r', k === hover ? 4.2 : rStop)); fjEls.forEach((e, k) => e.setAttribute('r', k === hover ? 4.8 : rFj));
-    // which IC labels fit, per view (greedy by priority)
-    icVis = [[], []]; icOff = [[], []];
-    for (const view of [0, 1]) {
-      compute(view);
-      const cam = view ? camB : camA, placed = [];
-      if (view === 0) { const sx = W / 2 - cam.cx * cam.z, sy = H / 2 + cam.cy * cam.z; placed.push([sx - 26, sy - 32, sx + 26, sy + 10]); }
-      const order = ics.map((c, j) => j).sort((a, b) => ics[a].p - ics[b].p);
-      for (const j of order) {
-        const c = ics[j], w = c.n.length * fs + 2, off = icOffset(c, w, view, fs);
-        const x = W / 2 + (RX[c.i] - cam.cx) * cam.z + off[0], y = H / 2 - (RY[c.i] - cam.cy) * cam.z + off[1];
-        const box = [x - w / 2 - 3, y - fs - 1, x + w / 2 + 3, y + 4];
-        const ok = box[0] > 2 && box[2] < W - 2 && !placed.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]);
-        icVis[view][j] = ok; icOff[view][j] = off;
-        if (ok) placed.push(box);
-      }
+  /* ---------- prediction ---------- */
+  let front = 0, rear = 0, firstFlip = '';
+  for (let pp = 1, prev = pose(0).ang; pp <= L; pp += 1) {
+    const a = pose(pp).ang;
+    if (Math.sign(a) !== Math.sign(prev)) {
+      if (Math.abs(a) < 90 && Math.abs(prev) < 90) { front++; if (!firstFlip) firstFlip = sectionName(L - pp); }
+      else if (Math.abs(a) > 90 && Math.abs(prev) > 90) rear++;
     }
-    render(tNow);
+    prev = a;
   }
+  const answer = $('answer');
+  document.querySelectorAll('.choices button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.choices button').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+    const ok = b.dataset.c === 'b';
+    answer.hidden = false;
+    answer.innerHTML = '<p><b>' + (ok ? '予想どおりです。' : '実際は、行き来します。') + '</b>富士山は、線の上側（西へ走る車の右手）と下側（左手）を行き来します。この計算では、富士山が正面を横切って左右が入れ替わるのは' + front + '回で、最初は' + firstFlip + 'です。後ろへ回ってからも、真後ろを横切る入れ替わりが' + rear + '回あります。杉浦氏の原図では、東京に近い区間でも上下に大きく振れています。</p>';
+  }));
 
-  /* ---------- render ---------- */
-  let tNow = 0, hover = -1;
-  function render(t) {
-    compute(t);
-    const z = Math.exp(lerp(Math.log(camA.z), Math.log(camB.z), t));
-    const cx = lerp(camA.cx, camB.cx, t), cy = lerp(camA.cy, camB.cy, t);
-    const X = x => W / 2 + (x - cx) * z, Y = y => H / 2 - (y - cy) * z;
-
-    gGeo.setAttribute('transform', `translate(${(W / 2 - cx * z).toFixed(2)} ${(H / 2 + cy * z).toFixed(2)}) scale(${z.toFixed(5)} ${(-z).toFixed(5)})`);
-    const geoA = 1 - sstep(0, 0.5, t);
-    gGeo.style.opacity = geoA; gGeo.style.display = geoA < 0.005 ? 'none' : '';
-
-    let d = '';
-    for (let i = 0; i < N; i++) d += (i ? 'L' : 'M') + X(RX[i]).toFixed(1) + ' ' + Y(RY[i]).toFixed(1);
-    roadEl.setAttribute('d', d);
-    d = '';
-    for (let k = 0; k < NSTOP; k++) { const i = stops[k].i; d += (k ? 'L' : 'M') + X(KX[i]).toFixed(1) + ' ' + Y(KY[i]).toFixed(1); }
-    kiteEl.setAttribute('d', d);
-    gKite.style.opacity = sstep(0.02, 0.22, t);
-
-    const numA = sstep(0.6, 1, t);
-    stops.forEach((s, k) => {
-      const x = X(RX[s.i]), y = Y(RY[s.i]), fx = X(KX[s.i]), fy = Y(KY[s.i]);
-      const st = stopEls[k]; st.setAttribute('cx', x.toFixed(1)); st.setAttribute('cy', y.toFixed(1));
-      const ln = sightEls[k]; ln.setAttribute('x1', x.toFixed(1)); ln.setAttribute('y1', y.toFixed(1)); ln.setAttribute('x2', fx.toFixed(1)); ln.setAttribute('y2', fy.toFixed(1));
-      const fj = fjEls[k]; fj.setAttribute('cx', fx.toFixed(1)); fj.setAttribute('cy', fy.toFixed(1));
-      const nm = numEls[k]; nm.setAttribute('x', fx.toFixed(1)); nm.setAttribute('y', (fy - 7).toFixed(1));
-      const on = k === hover;
-      nm.style.opacity = on ? Math.max(numA, sstep(0.05, 0.3, t)) : (NUMBERED.has(k + 1) ? numA : 0);
-      s.sx = x; s.sy = y; s.fx = fx; s.fy = fy;
-    });
-
-    gSummit.setAttribute('transform', `translate(${X(0).toFixed(1)} ${Y(0).toFixed(1)})`);
-    const sumA = 1 - sstep(0.05, 0.45, t);
-    gSummit.style.opacity = sumA; gSummit.style.display = sumA < 0.005 ? 'none' : '';
-
-    const lt = sstep(0.3, 0.7, t);
-    ics.forEach((c, j) => {
-      const a = icVis[0][j] && icVis[1][j] ? 1 : icVis[0][j] ? 1 - lt : icVis[1][j] ? lt : 0;
-      const e = icEls[j];
-      e.style.opacity = a; e.style.display = a < 0.005 ? 'none' : '';
-      e.setAttribute('x', (X(RX[c.i]) + lerp(icOff[0][j][0], icOff[1][j][0], t)).toFixed(1));
-      e.setAttribute('y', (Y(RY[c.i]) + lerp(icOff[0][j][1], icOff[1][j][1], t)).toFixed(1));
-    });
-
-    const nA = sstep(0.75, 1, t);
-    gNote.style.opacity = nA; gNote.style.display = nA < 0.005 ? 'none' : '';
-    const wx = X(RX[0]), wy = Y(RY[0]);
-    noteUp.setAttribute('x', wx.toFixed(1)); noteUp.setAttribute('y', (wy - 16).toFixed(1));
-    noteDn.setAttribute('x', wx.toFixed(1)); noteDn.setAttribute('y', (wy + 44).toFixed(1));
-
-    scaleLine.setAttribute('x1', 16); scaleLine.setAttribute('x2', (16 + 100 * z).toFixed(1));
-    scaleLine.setAttribute('y1', H - 14); scaleLine.setAttribute('y2', H - 14);
-    scaleText.setAttribute('x', 16); scaleText.setAttribute('y', H - 20);
-
-    if (hover >= 0) placeTip();
+  /* ---------- 2 x 2: three linked figures ---------- */
+  const VW = 480, VH = 330;
+  function fitter(x0, y0, x1, y1, pad) {
+    const z = Math.min((VW - pad * 2) / (x1 - x0), (VH - pad * 2) / (y1 - y0)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return { X: x => VW / 2 + (x - cx) * z, Y: y => VH / 2 - (y - cy) * z, z };
   }
+  const pathOf = (pts, X, Y) => pts.map((q, i) => (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join('');
 
-  /* ---------- toggle + animation ---------- */
-  const toggle = document.getElementById('toggle'), bMap = document.getElementById('btn-map'), bStr = document.getElementById('btn-straight');
-  const caption = document.getElementById('caption');
-  const CAP = [
-    '地図のままの状態です。点線は、道路上の40地点と富士山を結んでいます。',
-    '道路を直線に伸ばした状態です。各地点から見た富士山の方向と距離は変えていないので、富士山のほうが地点ごとに別の場所へ移ります。線より上は西へ走る車の右手、下は左手です。'
+  // map
+  const sMap = $('p-map');
+  let ex = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const q of P.concat([[0, 0]])) { ex[0] = Math.min(ex[0], q[0]); ex[1] = Math.min(ex[1], q[1]); ex[2] = Math.max(ex[2], q[0]); ex[3] = Math.max(ex[3], q[1]); }
+  const fm = fitter(ex[0], ex[1], ex[2], ex[3], 26);
+  mk(sMap, 'path', { d: D.land.map(r => pathOf(r, fm.X, fm.Y) + 'Z').join(''), fill: 'var(--land)', stroke: 'var(--coast)', 'stroke-width': .8 });
+  mk(sMap, 'path', { d: D.lakes.map(r => pathOf(r, fm.X, fm.Y) + 'Z').join(''), fill: 'var(--sea)', stroke: 'var(--coast)', 'stroke-width': .8 });
+  const mapLine = mk(sMap, 'line', { stroke: 'var(--fuji)', 'stroke-width': 1.6 });
+  mk(sMap, 'path', { d: pathOf(P, fm.X, fm.Y), fill: 'none', stroke: 'var(--road)', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  mk(sMap, 'path', { d: 'M0 -8 L8 6 L-8 6 Z', transform: `translate(${fm.X(0)} ${fm.Y(0)})`, fill: 'var(--fuji)', stroke: 'var(--land)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
+  mk(sMap, 'text', { class: 'halo', x: fm.X(0), y: fm.Y(0) - 13, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700 }, '富士山');
+  mk(sMap, 'text', { class: 'halo', x: fm.X(P[N - 1][0]) - 4, y: fm.Y(P[N - 1][1]) - 9, 'text-anchor': 'end', 'font-size': 11.5, 'font-weight': 500 }, '東京');
+  mk(sMap, 'text', { class: 'halo', x: fm.X(P[0][0]), y: fm.Y(P[0][1]) + 18, 'text-anchor': 'middle', 'font-size': 11.5, 'font-weight': 500 }, '西宮');
+  const mapCar = mk(sMap, 'circle', { r: 5.5, fill: 'var(--land)', stroke: 'var(--ink)', 'stroke-width': 2.5 });
+
+  // straightened
+  const sStr = $('p-str');
+  const trail = []; let sy0 = 0, sy1 = 0, sx0 = 0, sx1 = L;
+  for (let pp = 0; pp <= L; pp += 1) { const s = pose(pp); trail.push([s.kx, s.ky]); sy0 = Math.min(sy0, s.ky); sy1 = Math.max(sy1, s.ky); sx0 = Math.min(sx0, s.kx); sx1 = Math.max(sx1, s.kx); }
+  const fs = fitter(sx0, sy0, sx1, sy1, 24);
+  mk(sStr, 'path', { d: pathOf(trail, fs.X, fs.Y), fill: 'none', stroke: 'var(--fuji)', 'stroke-width': 1, opacity: .38, 'stroke-linejoin': 'round' });
+  const strLine = mk(sStr, 'line', { stroke: 'var(--fuji)', 'stroke-width': 1.6 });
+  mk(sStr, 'line', { x1: fs.X(0), x2: fs.X(L), y1: fs.Y(0), y2: fs.Y(0), stroke: 'var(--road)', 'stroke-width': 3, 'stroke-linecap': 'round' });
+  mk(sStr, 'text', { class: 'halo', x: fs.X(L), y: fs.Y(0) + 18, 'text-anchor': 'end', 'font-size': 11.5, 'font-weight': 500 }, '東京');
+  mk(sStr, 'text', { class: 'halo', x: fs.X(0), y: fs.Y(0) + 18, 'text-anchor': 'start', 'font-size': 11.5, 'font-weight': 500 }, '西宮');
+  mk(sStr, 'text', { class: 'halo', x: fs.X(0), y: 18, 'font-size': 11, fill: 'var(--muted)' }, '↑ 右手');
+  mk(sStr, 'text', { class: 'halo', x: fs.X(0), y: VH - 10, 'font-size': 11, fill: 'var(--muted)' }, '↓ 左手');
+  const strFuji = mk(sStr, 'path', { d: 'M0 -8 L8 6 L-8 6 Z', fill: 'var(--fuji)', stroke: 'var(--land)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
+  const strCar = mk(sStr, 'circle', { r: 5.5, fill: 'var(--land)', stroke: 'var(--ink)', 'stroke-width': 2.5 });
+
+  // driver's seat (schematic): windshield covers +/-48 degrees, the mirror the 33 degrees either side of straight back
+  const sSeat = $('p-seat'), HZ = 168, WIND = 48, MIRR = 33;
+  mk(sSeat, 'rect', { x: 0, y: 0, width: VW, height: HZ, fill: 'var(--sea)' });
+  mk(sSeat, 'rect', { x: 0, y: HZ, width: VW, height: VH - HZ, fill: 'var(--land)' });
+  const seatFuji = mk(sSeat, 'g');
+  const seatBody = mk(seatFuji, 'path', { fill: 'var(--fuji)' });
+  mk(sSeat, 'path', { d: `M${VW / 2 - 6} ${HZ} L${VW / 2 + 6} ${HZ} L${VW / 2 + 80} ${VH} L${VW / 2 - 80} ${VH} Z`, fill: 'var(--road)' });
+  mk(sSeat, 'line', { x1: 0, x2: VW, y1: HZ, y2: HZ, stroke: 'var(--coast)', 'stroke-width': 1 });
+  const seatLabel = mk(sSeat, 'text', { class: 'halo', 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700 });
+  const seatEdge = mk(sSeat, 'text', { class: 'halo', y: HZ - 30, 'font-size': 12, 'font-weight': 500 });
+  mk(sSeat, 'path', { d: `M0 ${VH} L0 ${VH - 34} Q${VW / 2} ${VH - 62} ${VW} ${VH - 34} L${VW} ${VH} Z`, fill: 'var(--board)' });
+  const MX = VW / 2 - 70, MY = 12, MW = 140, MH = 42;
+  mk(sSeat, 'rect', { x: MX, y: MY, width: MW, height: MH, rx: 6, fill: 'var(--sea)', stroke: 'var(--board)', 'stroke-width': 3 });
+  mk(sSeat, 'line', { x1: MX + 2, x2: MX + MW - 2, y1: MY + 28, y2: MY + 28, stroke: 'var(--coast)', 'stroke-width': 1 });
+  const mirFuji = mk(sSeat, 'path', { fill: 'var(--fuji)' });
+  mk(sSeat, 'text', { x: VW / 2, y: MY + MH + 14, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--muted)' }, 'ルームミラー');
+
+  const mpos = $('mpos'); mpos.max = L.toFixed(1);
+  function drawMatrix() {
+    const pp = parseFloat(mpos.value), s = pose(pp);
+    $('mout').textContent = sectionName(s.u);
+    mapCar.setAttribute('cx', fm.X(s.x)); mapCar.setAttribute('cy', fm.Y(s.y));
+    mapLine.setAttribute('x1', fm.X(s.x)); mapLine.setAttribute('y1', fm.Y(s.y)); mapLine.setAttribute('x2', fm.X(0)); mapLine.setAttribute('y2', fm.Y(0));
+    strCar.setAttribute('cx', fs.X(s.u)); strCar.setAttribute('cy', fs.Y(0));
+    strLine.setAttribute('x1', fs.X(s.u)); strLine.setAttribute('y1', fs.Y(0)); strLine.setAttribute('x2', fs.X(s.kx)); strLine.setAttribute('y2', fs.Y(s.ky));
+    strFuji.setAttribute('transform', `translate(${fs.X(s.kx).toFixed(1)} ${fs.Y(s.ky).toFixed(1)})`);
+    const m = Math.abs(s.ang);
+    if (m <= WIND) {
+      const h = clamp(2400 / s.dist, 9, 120), x = VW / 2 + s.ang / WIND * (VW / 2 - 20);
+      seatBody.setAttribute('d', `M${(x - h * 1.25).toFixed(1)} ${HZ} Q${(x - h * .35).toFixed(1)} ${(HZ - h * .55).toFixed(1)} ${(x - h * .1).toFixed(1)} ${(HZ - h).toFixed(1)} L${(x + h * .1).toFixed(1)} ${(HZ - h).toFixed(1)} Q${(x + h * .35).toFixed(1)} ${(HZ - h * .55).toFixed(1)} ${(x + h * 1.25).toFixed(1)} ${HZ} Z`);
+      seatFuji.style.display = ''; seatEdge.textContent = '';
+      seatLabel.textContent = '富士山'; seatLabel.setAttribute('x', clamp(x, 30, VW - 30)); seatLabel.setAttribute('y', Math.max(HZ - h - 8, MY + MH + 30));
+    } else {
+      seatFuji.style.display = 'none'; seatLabel.textContent = '';
+      const right = s.ang > 0;
+      seatEdge.textContent = (right ? '' : '◀ ') + '富士山 ' + dirText(s.ang) + (right ? ' ▶' : '');
+      seatEdge.setAttribute('x', right ? VW - 12 : 12); seatEdge.setAttribute('text-anchor', right ? 'end' : 'start');
+    }
+    if (m >= 180 - MIRR) {                      // a mirror shows what is behind-right on its right
+      const off = (180 - m) / MIRR * (MW / 2 - 8) * Math.sign(s.ang), x = MX + MW / 2 + off, h = clamp(700 / s.dist, 3, 22), y = MY + 28;
+      mirFuji.setAttribute('d', `M${(x - h * 1.2).toFixed(1)} ${y} L${x.toFixed(1)} ${(y - h).toFixed(1)} L${(x + h * 1.2).toFixed(1)} ${y} Z`);
+      mirFuji.style.display = '';
+    } else mirFuji.style.display = 'none';
+    const d = '約' + Math.round(s.dist) + ' km', a = dirText(s.ang);
+    $('k-d1').textContent = d; $('k-d2').textContent = d; $('k-d3').textContent = d + '（山の大きさ）';
+    $('k-a1').textContent = a; $('k-a2').textContent = a; $('k-a3').textContent = a;
+    $('k-c1').textContent = windName(s.compass);
+  }
+  mpos.addEventListener('input', drawMatrix);
+  drawMatrix();
+
+  /* ---------- timetable (an invented line, 7:00-9:00) ---------- */
+  const ST = [{ n: 'みなと', t: 0 }, { n: 'さくら台', t: 4 }, { n: '中央', t: 9 }, { n: 'かわべ', t: 13 }, { n: 'やまのうえ', t: 19 }];
+  const RAPID = { 0: 0, 2: 7, 4: 15 };                                   // station index -> minutes from departure
+  const hm = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const fmt = t => Math.floor(t / 60) + ':' + String(Math.round(t) % 60).padStart(2, '0');
+  const trains = [
+    ...['6:44', '7:00', '7:12', '7:20', '7:35', '7:42', '7:58', '8:05', '8:20', '8:31', '8:44', '8:55', '9:05', '9:18'].map(s => ({ rapid: false, t0: hm(s) })),
+    ...['6:50', '7:08', '7:28', '7:50', '8:12', '8:38', '9:02'].map(s => ({ rapid: true, t0: hm(s) })),
   ];
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let target = 0, raf = 0, fromT = 0, startAt = 0;
-  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-  let rawNow = 0;                                // un-eased progress, so reversing mid-way is smooth
-  function setState(v) {
-    target = v ? 1 : 0;
-    toggle.setAttribute('aria-checked', v ? 'true' : 'false');
-    bMap.setAttribute('aria-pressed', v ? 'false' : 'true');
-    bStr.setAttribute('aria-pressed', v ? 'true' : 'false');
-    caption.textContent = CAP[target];
-    cancelAnimationFrame(raf);
-    if (reduce.matches) { rawNow = target; tNow = target; render(tNow); return; }
-    fromT = rawNow; startAt = performance.now();
-    const dur = 2400 * Math.abs(target - fromT);
-    const step = now => {
-      const p = dur <= 0 ? 1 : Math.min(1, (now - startAt) / dur);
-      rawNow = lerp(fromT, target, p); tNow = ease(rawNow);
-      render(tNow);
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-  }
-  toggle.addEventListener('click', () => setState(target === 0));
-  bMap.addEventListener('click', () => setState(false));
-  bStr.addEventListener('click', () => setState(true));
-  caption.textContent = CAP[0];
+  const stopAt = (tr, si) => tr.rapid ? (si in RAPID ? tr.t0 + RAPID[si] : null) : tr.t0 + ST[si].t;
+  const departures = si => trains.map(tr => ({ rapid: tr.rapid, t: stopAt(tr, si), arr: stopAt(tr, 4) })).filter(d => d.t !== null).sort((a, b) => a.t - b.t);
+  const T0 = 420, T1 = 540;
+  let station = 2;
+  const seg = $('st-seg'), tnow = $('tnow');
+  ST.slice(0, 4).forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s.n; b.addEventListener('click', () => { station = i; drawTrain(); }); seg.appendChild(b); });
 
-  /* ---------- hover ---------- */
-  function setHover(k) {
-    if (k === hover) return;
-    if (hover >= 0) { sightEls[hover].classList.remove('hl'); stopEls[hover].classList.remove('hl'); fjEls[hover].classList.remove('hl'); stopEls[hover].setAttribute('r', rStop); fjEls[hover].setAttribute('r', rFj); }
-    hover = k;
-    if (k >= 0) {
-      sightEls[k].classList.add('hl'); stopEls[k].classList.add('hl'); fjEls[k].classList.add('hl');
-      stopEls[k].setAttribute('r', 4.2); fjEls[k].setAttribute('r', 4.8);
-      gSight.appendChild(sightEls[k]); gStops.appendChild(stopEls[k]); gKite.appendChild(fjEls[k]);
-      const s = stops[k];
-      tip.innerHTML = `<b>地点 ${k + 1}</b>　${s.sec}<br><span class="k">富士山まで</span> <span class="v">約${Math.round(s.dist)} km</span><br><span class="k">西行きの進行方向から</span> <span class="v">${s.dir}</span>`;
-      tip.classList.add('on');
-    } else tip.classList.remove('on');
-    render(tNow);
-  }
-  function placeTip() {
-    const s = stops[hover], tw = tip.offsetWidth, th = tip.offsetHeight;
-    let x = s.sx + 14, y = s.sy - th - 12;
-    if (x + tw > W - 6) x = s.sx - tw - 14;
-    if (x < 6) x = 6;
-    if (y < 6) y = s.sy + 16;
-    tip.style.left = x + 'px'; tip.style.top = y + 'px';
-  }
-  function pick(ev) {
-    const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width, py = (ev.clientY - r.top) * H / r.height;
-    let best = -1, bd = 26;
-    for (const s of stops) {
-      let dd = Math.hypot(s.sx - px, s.sy - py);
-      if (tNow > 0.3) dd = Math.min(dd, Math.hypot(s.fx - px, s.fy - py));
-      if (dd < bd) { bd = dd; best = s.k; }
+  const sDia = $('t-dia'), sSaw = $('t-saw'), board = $('t-board');
+  function drawTrain() {
+    const now = parseFloat(tnow.value), deps = departures(station);
+    $('tout').textContent = fmt(now);
+    [...seg.children].forEach((b, i) => b.setAttribute('aria-pressed', i === station ? 'true' : 'false'));
+
+    // diagram: time across, stations down
+    while (sDia.firstChild) sDia.removeChild(sDia.firstChild);
+    const dm = { l: 84, r: 16, t: 30, b: 20 }, DW = 960, DH = 300;
+    const X = t => dm.l + (t - T0) / (T1 - T0) * (DW - dm.l - dm.r), Y = m => dm.t + m / 19 * (DH - dm.t - dm.b);
+    const clip = mk(mk(sDia, 'defs', {}), 'clipPath', { id: 'dclip' }); mk(clip, 'rect', { x: dm.l, y: dm.t - 4, width: DW - dm.l - dm.r, height: DH - dm.t - dm.b + 8 });
+    for (let t = T0; t <= T1; t += 10) {
+      mk(sDia, 'line', { x1: X(t), x2: X(t), y1: dm.t, y2: DH - dm.b, stroke: 'var(--rule)', 'stroke-width': t % 60 === 0 ? 1.2 : .6 });
+      if (t % 30 === 0) mk(sDia, 'text', { x: X(t), y: dm.t - 10, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, fmt(t));
     }
-    setHover(best);
-  }
-  svg.addEventListener('pointermove', pick);
-  svg.addEventListener('pointerdown', pick);
-  svg.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') setHover(-1); });
+    ST.forEach((s, i) => {
+      mk(sDia, 'line', { x1: dm.l, x2: DW - dm.r, y1: Y(s.t), y2: Y(s.t), stroke: i === station ? 'var(--fuji)' : 'var(--coast)', 'stroke-width': i === station ? 1.8 : 1 });
+      mk(sDia, 'text', { x: dm.l - 10, y: Y(s.t) + 4, 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': i === station ? 700 : 500 }, s.n);
+    });
+    const g = mk(sDia, 'g', { 'clip-path': 'url(#dclip)' });
+    for (const tr of trains) {
+      const pts = [];
+      ST.forEach((s, i) => { const t = stopAt(tr, i); if (t !== null) pts.push([X(t), Y(s.t)]); });
+      mk(g, 'path', { d: pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(''), fill: 'none', stroke: tr.rapid ? 'var(--road)' : 'var(--ink)', 'stroke-width': tr.rapid ? 2.6 : 1.4, 'stroke-linejoin': 'round' });
+    }
+    mk(sDia, 'line', { x1: X(now), x2: X(now), y1: dm.t - 4, y2: DH - dm.b + 4, stroke: 'var(--fuji)', 'stroke-width': 1.8 });
+    mk(sDia, 'circle', { cx: X(now), cy: Y(ST[station].t), r: 5.5, fill: 'var(--land)', stroke: 'var(--fuji)', 'stroke-width': 2.5 });
 
-  /* ---------- go ---------- */
-  compute(0); camA = camB = { z: 1, cx: 0, cy: 0 };
-  if ('ResizeObserver' in window) new ResizeObserver(layout).observe(wrap); else window.addEventListener('resize', layout);
-  layout();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+    // board: the next three departures, in minutes from now
+    const next = deps.filter(d => d.t >= now).slice(0, 3);
+    board.innerHTML = '<div class="now">' + ST[station].n + '駅　' + fmt(now) + '　やまのうえ方面</div>' + next.map(d =>
+      `<div class="row"><span class="type${d.rapid ? ' rapid' : ''}">${d.rapid ? '快速' : '各停'}</span><span class="dest">${fmt(d.t)} 発　やまのうえ ${fmt(d.arr)} 着</span><span class="wait">${d.t - now === 0 ? 'まもなく' : (d.t - now) + '<small>分後</small>'}</span></div>`).join('');
+
+    // waiting time against the moment you reach the platform
+    while (sSaw.firstChild) sSaw.removeChild(sSaw.firstChild);
+    const sm = { l: 44, r: 14, t: 28, b: 30 }, SW = 540, SH = 300;
+    let maxW = 0, area = 0, path = '';
+    const edges = deps.filter(d => d.t >= T0 - 30);
+    for (let i = 1; i < edges.length; i++) {
+      const a = Math.max(edges[i - 1].t, T0), b = Math.min(edges[i].t, T1);
+      if (b <= a) continue;
+      const w0 = edges[i].t - a, w1 = edges[i].t - b;
+      maxW = Math.max(maxW, w0); area += (w0 + w1) / 2 * (b - a);
+    }
+    const YM = Math.ceil((maxW + 1) / 5) * 5;
+    const SX = t => sm.l + (t - T0) / (T1 - T0) * (SW - sm.l - sm.r), SY = w => SH - sm.b - w / YM * (SH - sm.t - sm.b);
+    for (let w = 0; w <= YM; w += 5) {
+      mk(sSaw, 'line', { x1: sm.l, x2: SW - sm.r, y1: SY(w), y2: SY(w), stroke: 'var(--rule)', 'stroke-width': w === 0 ? 1.2 : .6 });
+      mk(sSaw, 'text', { x: sm.l - 8, y: SY(w) + 4, 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--muted)' }, w);
+    }
+    mk(sSaw, 'text', { x: sm.l - 30, y: sm.t - 12, 'font-size': 11.5, fill: 'var(--muted)' }, '待ち時間（分）');
+    for (let t = T0; t <= T1; t += 30) mk(sSaw, 'text', { x: SX(t), y: SH - 10, 'text-anchor': t === T0 ? 'start' : t === T1 ? 'end' : 'middle', 'font-size': 11.5, fill: 'var(--muted)' }, fmt(t));
+    for (let i = 1; i < edges.length; i++) {
+      const a = Math.max(edges[i - 1].t, T0), b = Math.min(edges[i].t, T1);
+      if (b <= a) continue;
+      path += 'M' + SX(a).toFixed(1) + ' ' + SY(edges[i].t - a).toFixed(1) + 'L' + SX(b).toFixed(1) + ' ' + SY(edges[i].t - b).toFixed(1);
+    }
+    mk(sSaw, 'path', { d: path, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.8, 'stroke-linecap': 'round' });
+    const wNow = (deps.find(d => d.t >= now) || { t: now }).t - now;
+    mk(sSaw, 'line', { x1: SX(now), x2: SX(now), y1: sm.t, y2: SH - sm.b, stroke: 'var(--fuji)', 'stroke-width': 1.8 });
+    mk(sSaw, 'circle', { cx: SX(now), cy: SY(wNow), r: 5.5, fill: 'var(--land)', stroke: 'var(--fuji)', 'stroke-width': 2.5 });
+    const avg = area / (T1 - T0);
+    mk(sSaw, 'text', { class: 'halo', x: SW - sm.r, y: sm.t - 12, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700 }, `平均 ${avg.toFixed(1)}分　最長 ${Math.round(maxW)}分`);
+    $('t-note').textContent = `いま選んでいる${ST[station].n}駅では、7時から9時の平均の待ち時間は${avg.toFixed(1)}分、最長は${Math.round(maxW)}分です。`;
+  }
+  tnow.addEventListener('input', drawTrain);
+  drawTrain();
 })();
 </script>
 </body>
