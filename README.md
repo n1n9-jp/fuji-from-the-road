@@ -4,11 +4,11 @@
 
 道路をまっすぐにして富士山のほうを動かすアイデアは、グラフィックデザイナー杉浦康平氏のダイアグラム「右往左往する富士山の地図」のものです。このリポジトリは、そのアイデアを公開データで計算し直した習作で、原図を再現したものではありません。
 
-- **[視点をどこに置くか](https://n1n9-jp.github.io/fuji-from-the-road/)**（読み物）
+- **[視点をどこに置くか](https://fuji-from-the-road.visualizing.jp/)**（読み物）
   下の2つの図を動かしながら、「読み手の座標系で描き直してから、俯瞰させる」という考え方を順に説明します。鉄道の時刻表（架空のダイヤ）で同じ変換をもう一度試します。
-- **[まっすぐな道と、動く富士山](https://n1n9-jp.github.io/fuji-from-the-road/flat/)**（平面版）
+- **[まっすぐな道と、動く富士山](https://fuji-from-the-road.visualizing.jp/flat/)**（平面版）
   地図のままの表示と、道路を直線に伸ばした表示をスイッチで切り替えます。直線化しても各地点から富士山への方向と距離は変えないので、富士山のほうが地点ごとに別の場所へ移ります。
-- **[運転席から見る富士山](https://n1n9-jp.github.io/fuji-from-the-road/drive/)**（3D版）
+- **[運転席から見る富士山](https://fuji-from-the-road.visualizing.jp/drive/)**（3D版）
   同じ計算を、フロントガラスとルームミラーの眺めにしたものです。下り・上りを選んで走らせると、道が曲がるたびに富士山が左右へ動きます。
 
 ## 構成
@@ -20,7 +20,8 @@
 | `drive/index.html` | 3D版。three.js r128 を cdnjs から読み込み |
 | `data.js` | 2ページ共通のデータ（道路の線形、IC の位置、陸地、湖）。`tools/build_data.py` が生成 |
 | `tools/build_data.py` | Natural Earth の GeoJSON から `data.js` を作るスクリプト |
-| `.nojekyll` | GitHub Pages に、ファイルをそのまま配信させるための空ファイル |
+| `vercel.json` | Vercel の設定。末尾スラッシュなしの URL（`/drive` など）をスラッシュ付きへ転送する |
+| `.nojekyll` | GitHub Pages で配信する場合に、ファイルをそのまま配信させるための空ファイル |
 
 ビルド工程はありません。リポジトリのルートをそのまま静的サイトとして配信します。
 
