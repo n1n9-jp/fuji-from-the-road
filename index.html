@@ -106,7 +106,7 @@ th, td { text-align: left; padding: 7px 14px 7px 0; border-bottom: 1px solid var
 thead th { color: var(--muted); font-weight: 500; font-size: 13px; }
 tbody th { font-weight: 500; }
 .scroll { overflow-x: auto; }
-.scroll table { min-width: 560px; }
+.scroll table { min-width: 640px; }
 .kept { color: var(--road); font-weight: 700; }
 .lost { color: var(--muted); }
 
@@ -175,34 +175,35 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
   </section>
 
   <section aria-labelledby="h-matrix">
-    <h2 id="h-matrix">3つの図を並べる</h2>
-    <p>ここまでの3つの図は、2つの問いで整理できます。誰の座標系で描くか。どこから眺めるか。スライダーを動かすと、同じ地点を3つの図で同時に追えます。</p>
+    <h2 id="h-matrix">4つの図を並べる</h2>
+    <p>ここまでの図は、2つの問いで整理できます。何を基準にして描くか。全体を見渡すのか、その場から見るのか。組み合わせは4つあるので、まだ出てきていない1つを足しました。展望台にある方位盤のように、その場に立って周りを見るけれど、東西南北は地面に合わせたままの図です。スライダーを動かすと、同じ地点を4つの図で同時に追えます。</p>
     <div class="ctl">
       <label for="mpos">道路上の位置（下り、東京 → 西宮）　<output id="mout"></output></label>
       <input type="range" id="mpos" min="0" max="100" step="0.5" value="60">
     </div>
     <div class="matrix">
-      <div></div><div class="colh">大地の座標系</div><div class="colh">走る人の座標系</div>
-      <div class="rowh">上から見渡す</div>
-      <figure class="panel"><figcaption>地図 <span class="chips">大地の座標系 × 上から見渡す</span></figcaption><svg id="p-map" viewBox="0 0 480 330" role="img" aria-label="地図。道路と富士山、現在地を示す。"></svg></figure>
-      <figure class="panel"><figcaption>まっすぐにした図 <span class="chips">走る人の座標系 × 上から見渡す</span></figcaption><svg id="p-str" viewBox="0 0 480 330" role="img" aria-label="道路を直線に伸ばした図。現在地から見た富士山の位置を示す。"></svg></figure>
-      <div class="rowh">中から見る</div>
-      <div class="panel none">この組み合わせの図は作っていません。<br>たとえば、ずっと北を向いたまま立っている人の眺めがこれにあたります。</div>
-      <figure class="panel"><figcaption>運転席 <span class="chips">走る人の座標系 × 中から見る</span></figcaption><svg id="p-seat" viewBox="0 0 480 330" role="img" aria-label="運転席の眺めの模式図。フロントガラスとルームミラーの中の富士山を示す。"></svg></figure>
+      <div></div><div class="colh">地面を基準にする</div><div class="colh">走る人を基準にする</div>
+      <div class="rowh">全体を見渡す</div>
+      <figure class="panel"><figcaption>地図 <span class="chips">地面を基準 × 全体を見渡す</span></figcaption><svg id="p-map" viewBox="0 0 480 330" role="img" aria-label="地図。道路と富士山、現在地を示す。"></svg></figure>
+      <figure class="panel"><figcaption>まっすぐにした図 <span class="chips">走る人を基準 × 全体を見渡す</span></figcaption><svg id="p-str" viewBox="0 0 480 330" role="img" aria-label="道路を直線に伸ばした図。現在地から見た富士山の位置を示す。"></svg></figure>
+      <div class="rowh">その場から見る</div>
+      <figure class="panel"><figcaption>方位盤 <span class="chips">地面を基準 × その場から見る</span></figcaption><svg id="p-comp" viewBox="0 0 480 330" role="img" aria-label="方位盤の模式図。東西南北を固定した帯の上に、現在地から見た富士山の方角と車の向きを示す。"></svg></figure>
+      <figure class="panel"><figcaption>運転席 <span class="chips">走る人を基準 × その場から見る</span></figcaption><svg id="p-seat" viewBox="0 0 480 330" role="img" aria-label="運転席の眺めの模式図。フロントガラスとルームミラーの中の富士山を示す。"></svg></figure>
     </div>
-    <p>右往左往が一目で分かるのは、右上の図だけです。地図では富士山は動きません。運転席では、動きは見えても全体が残りません。杉浦氏の図は運転席からの眺めではなく、走る人の座標系で描いたものを、上から見渡しています。</p>
+    <p>左下の方位盤を見てください。富士山は西から北を回って東へ、ゆっくり移るだけで、大きく行き来することはありません。その代わりに、車の向きを示す印のほうが左右に振れます。運転席と同じ「その場からの眺め」なのに、富士山は右往左往しないのです。右往左往の原因は、場所が変わることではなく、車の向きが変わることだと分かります。</p>
+    <p>そして、右往左往が一目で分かるのは、右上の図だけです。地図では富士山は動きません。運転席では、動きは見えても全体が残りません。杉浦氏の図は運転席からの眺めではなく、走る人を基準に描いたものを、全体が見渡せる形にしています。</p>
 
     <h3>保ったものと、捨てたもの</h3>
-    <p>座標系を変えるとは、何を保ち、何を捨てるかを決めることです。まっすぐにした図は、富士山までの距離と、道路に対する角度を保ちました。その代わりに、方角と、海岸線や地形との位置関係を捨てています。下の表は、上のスライダーの地点での値です。</p>
+    <p>基準を変えるとは、何を保ち、何を捨てるかを決めることです。まっすぐにした図は、富士山までの距離と、道路に対する角度を保ちました。その代わりに、方角と、海岸線や地形との位置関係を捨てています。下の表は、上のスライダーの地点での値です。</p>
     <div class="scroll">
       <table>
-        <thead><tr><th></th><th>地図</th><th>まっすぐにした図</th><th>運転席</th></tr></thead>
+        <thead><tr><th></th><th>地図</th><th>方位盤</th><th>まっすぐにした図</th><th>運転席</th></tr></thead>
         <tbody>
-          <tr><th>富士山までの距離</th><td class="kept" id="k-d1"></td><td class="kept" id="k-d2"></td><td class="kept" id="k-d3"></td></tr>
-          <tr><th>道路に対する角度</th><td class="kept" id="k-a1"></td><td class="kept" id="k-a2"></td><td class="kept" id="k-a3"></td></tr>
-          <tr><th>富士山の方角</th><td class="kept" id="k-c1"></td><td class="lost">読み取れない</td><td class="lost">読み取れない</td></tr>
-          <tr><th>海岸線や地形との位置関係</th><td class="kept">ある</td><td class="lost">ない</td><td class="lost">近くだけ</td></tr>
-          <tr><th>全線を通した動き</th><td class="lost">富士山は動かない</td><td class="kept">一目で分かる</td><td class="lost">いまの位置だけ</td></tr>
+          <tr><th>富士山までの距離</th><td class="kept" id="k-d1"></td><td class="kept" id="k-d4"></td><td class="kept" id="k-d2"></td><td class="kept" id="k-d3"></td></tr>
+          <tr><th>道路に対する角度</th><td class="kept" id="k-a1"></td><td class="lost">読み取れない</td><td class="kept" id="k-a2"></td><td class="kept" id="k-a3"></td></tr>
+          <tr><th>富士山の方角</th><td class="kept" id="k-c1"></td><td class="kept" id="k-c4"></td><td class="lost">読み取れない</td><td class="lost">読み取れない</td></tr>
+          <tr><th>海岸線や地形との位置関係</th><td class="kept">ある</td><td class="lost">ない</td><td class="lost">ない</td><td class="lost">近くだけ</td></tr>
+          <tr><th>全線を通した動き</th><td class="lost">富士山は動かない</td><td class="lost">いまの位置だけ</td><td class="kept">一目で分かる</td><td class="lost">いまの位置だけ</td></tr>
         </tbody>
       </table>
     </div>
@@ -217,9 +218,9 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
       <input type="range" id="tnow" min="420" max="530" step="1" value="451">
     </div>
     <div class="tt">
-      <figure class="panel wide"><figcaption>ダイヤグラム <span>運行する側の座標系 × 上から見渡す</span></figcaption><svg id="t-dia" viewBox="0 0 960 300" role="img" aria-label="ダイヤグラム。横軸が時刻、縦軸が駅で、列車を線で示す。"></svg></figure>
-      <figure class="panel"><figcaption>待ち時間の図 <span>ホームに立つ人の座標系 × 上から見渡す</span></figcaption><svg id="t-saw" viewBox="0 0 540 300" role="img" aria-label="ホームに着く時刻ごとの待ち時間。"></svg></figure>
-      <figure class="panel"><figcaption>発車標 <span>ホームに立つ人の座標系 × 中から見る</span></figcaption><div class="board" id="t-board" aria-live="off"></div></figure>
+      <figure class="panel wide"><figcaption>ダイヤグラム <span>運行する側を基準 × 全体を見渡す</span></figcaption><svg id="t-dia" viewBox="0 0 960 300" role="img" aria-label="ダイヤグラム。横軸が時刻、縦軸が駅で、列車を線で示す。"></svg></figure>
+      <figure class="panel"><figcaption>待ち時間の図 <span>ホームに立つ人を基準 × 全体を見渡す</span></figcaption><svg id="t-saw" viewBox="0 0 540 300" role="img" aria-label="ホームに着く時刻ごとの待ち時間。"></svg></figure>
+      <figure class="panel"><figcaption>発車標 <span>ホームに立つ人を基準 × その場から見る</span></figcaption><div class="board" id="t-board" aria-live="off"></div></figure>
     </div>
     <ul class="legend">
       <li><svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="23" y2="5" stroke="var(--ink)" stroke-width="1.4"/></svg>各駅停車</li>
@@ -229,7 +230,8 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
     <p class="small">説明のために作った架空の路線とダイヤです。みなと発やまのうえ行きの、朝7時から9時までを描いています。</p>
     <p>ダイヤグラムは、運行する側の図です。すべての列車と駅が一望できます。けれどもホームに立つ人は、自分の駅の線と、いまの時刻の線が交わるところを、自分で探さなければなりません。</p>
     <p>発車標は、ホームに立つ人の図です。原点は「いま、この駅」。単位は時刻ではなく「あと何分」です。ただし運転席と同じで、見えるのは「いま」だけです。</p>
-    <p>待ち時間の図は、ホームに立つ人の座標系のまま、朝の2時間を見渡したものです。何時にホームへ着くと長く待つのかが、一目で分かります。駅を「さくら台」に変えると、快速が止まらないぶん山が高くなります。<span id="t-note"></span></p>
+    <p>待ち時間の図は、ホームに立つ人を基準にしたまま、朝の2時間を見渡したものです。何時にホームへ着くと長く待つのかが、一目で分かります。駅を「さくら台」に変えると、快速が止まらないぶん山が高くなります。<span id="t-note"></span></p>
+    <p>4つめの組み合わせ、つまり運行する側を基準にその場から見る図もあります。運転士が持つ、1本の列車だけの時刻表がそれです。ここでは描いていません。</p>
     <p>ここでも、保ったものと捨てたものがあります。保ったのは、自分の駅を出る列車の時刻です。捨てたのは、ほかの駅のことと、列車どうしの関係です。</p>
   </section>
 
@@ -261,7 +263,8 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
   <section aria-labelledby="h-end">
     <h2 id="h-end">俯瞰か、運転席か</h2>
     <p>地図は俯瞰の視点で、全体を管理する側、いわば行政の視点です。運転席は主観の視点です。一般の人にデータを伝えようとするなら、俯瞰よりも運転席の視点で描くべきではないか。私はそう考えてきました。</p>
-    <p>ただ、運転席に座らせるだけでは「いま」しか見えません。自分の景色がふつうなのかどうかも分かりません。杉浦氏の図が教えてくれるのは、その先です。走る人の座標系で描き直し、それを上から見渡せるようにする。入口は運転席で、出口は俯瞰です。</p>
+    <p>ただ、運転席に座らせるだけでは「いま」しか見えません。自分の景色がふつうなのかどうかも分かりません。杉浦氏の図が教えてくれるのは、その先です。走る人を基準に描き直し、それを全体が見渡せる形にする。入口は運転席で、出口は俯瞰です。</p>
+    <p>座標系とは、何を基準にして描くか、ということです。</p>
     <p class="principle">読み手の座標系で描き直してから、俯瞰させる。</p>
   </section>
 
@@ -311,7 +314,8 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
     return { u, x: q.x, y: q.y, dist: Math.hypot(wx, wy),
       ang: Math.atan2(leftE, -alongE) * 180 / Math.PI,          // westbound driver: + is to the right
       kx: u + alongE, ky: leftE,                                 // Fuji in the straightened figure
-      compass: (Math.atan2(wx, wy) * 180 / Math.PI + 360) % 360 };
+      compass: (Math.atan2(wx, wy) * 180 / Math.PI + 360) % 360,
+      heading: ((90 - (q.h + Math.PI) * 180 / Math.PI) % 360 + 360) % 360 };   // compass bearing of the car, westbound
   }
   const ics = [...D.ics].sort((a, b) => b.u - a.u);              // Tokyo first
   function sectionName(u) {
@@ -346,7 +350,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
     answer.innerHTML = '<p><b>' + (ok ? '予想どおりです。' : '実際は、行き来します。') + '</b>富士山は、線の上側（西へ走る車の右手）と下側（左手）を行き来します。この計算では、富士山が正面を横切って左右が入れ替わるのは' + front + '回で、最初は' + firstFlip + 'です。後ろへ回ってからも、真後ろを横切る入れ替わりが' + rear + '回あります。杉浦氏の原図では、東京に近い区間でも上下に大きく振れています。</p>';
   }));
 
-  /* ---------- 2 x 2: three linked figures ---------- */
+  /* ---------- 2 x 2: four linked figures ---------- */
   const VW = 480, VH = 330;
   function fitter(x0, y0, x1, y1, pad) {
     const z = Math.min((VW - pad * 2) / (x1 - x0), (VH - pad * 2) / (y1 - y0)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
@@ -401,6 +405,22 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
   const mirFuji = mk(sSeat, 'path', { fill: 'var(--fuji)' });
   mk(sSeat, 'text', { x: VW / 2, y: MY + MH + 14, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--muted)' }, 'ルームミラー');
 
+  // direction board: the compass stays fixed to the ground, north in the middle
+  const sComp = $('p-comp'), CX = d => VW / 2 + ((d + 180) % 360 - 180) / 180 * (VW / 2 - 18);
+  mk(sComp, 'rect', { x: 0, y: 0, width: VW, height: HZ, fill: 'var(--sea)' });
+  mk(sComp, 'rect', { x: 0, y: HZ, width: VW, height: VH - HZ, fill: 'var(--land)' });
+  const compBody = mk(sComp, 'path', { fill: 'var(--fuji)' });
+  mk(sComp, 'line', { x1: 0, x2: VW, y1: HZ, y2: HZ, stroke: 'var(--coast)', 'stroke-width': 1 });
+  [[-180, '南'], [-135, '南西'], [-90, '西'], [-45, '北西'], [0, '北'], [45, '北東'], [90, '東'], [135, '南東'], [180, '南']].forEach(([d, n]) => {
+    const x = VW / 2 + d / 180 * (VW / 2 - 18), main = d % 90 === 0;
+    mk(sComp, 'line', { x1: x, x2: x, y1: HZ, y2: HZ + (main ? 12 : 7), stroke: 'var(--muted)', 'stroke-width': main ? 1.4 : 1 });
+    mk(sComp, 'text', { x, y: HZ + 30, 'text-anchor': 'middle', 'font-size': main ? 13 : 10.5, 'font-weight': main ? 700 : 400, fill: main ? 'var(--ink)' : 'var(--muted)' }, n);
+  });
+  const compLabel = mk(sComp, 'text', { class: 'halo', 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700 });
+  const compCar = mk(sComp, 'g');
+  mk(compCar, 'path', { d: 'M0 -9 L8 7 L-8 7 Z', fill: 'var(--land)', stroke: 'var(--ink)', 'stroke-width': 2.2, 'stroke-linejoin': 'round' });
+  mk(compCar, 'text', { class: 'halo', y: 24, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 500 }, '車の向き');
+
   const mpos = $('mpos'); mpos.max = L.toFixed(1);
   function drawMatrix() {
     const pp = parseFloat(mpos.value), s = pose(pp);
@@ -427,10 +447,16 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; fl
       mirFuji.setAttribute('d', `M${(x - h * 1.2).toFixed(1)} ${y} L${x.toFixed(1)} ${(y - h).toFixed(1)} L${(x + h * 1.2).toFixed(1)} ${y} Z`);
       mirFuji.style.display = '';
     } else mirFuji.style.display = 'none';
+    {
+      const x = CX(s.compass), h = clamp(2400 / s.dist, 9, 120);
+      compBody.setAttribute('d', `M${(x - h * 1.25).toFixed(1)} ${HZ} Q${(x - h * .35).toFixed(1)} ${(HZ - h * .55).toFixed(1)} ${(x - h * .1).toFixed(1)} ${(HZ - h).toFixed(1)} L${(x + h * .1).toFixed(1)} ${(HZ - h).toFixed(1)} Q${(x + h * .35).toFixed(1)} ${(HZ - h * .55).toFixed(1)} ${(x + h * 1.25).toFixed(1)} ${HZ} Z`);
+      compLabel.textContent = '富士山（' + windName(s.compass) + '）'; compLabel.setAttribute('x', clamp(x, 50, VW - 50)); compLabel.setAttribute('y', Math.max(HZ - h - 8, 16));
+      compCar.setAttribute('transform', `translate(${CX(s.heading).toFixed(1)} ${HZ + 62})`);
+    }
     const d = '約' + Math.round(s.dist) + ' km', a = dirText(s.ang);
-    $('k-d1').textContent = d; $('k-d2').textContent = d; $('k-d3').textContent = d + '（山の大きさ）';
+    $('k-d1').textContent = d; $('k-d2').textContent = d; $('k-d3').textContent = d + '（山の大きさ）'; $('k-d4').textContent = d + '（山の大きさ）';
     $('k-a1').textContent = a; $('k-a2').textContent = a; $('k-a3').textContent = a;
-    $('k-c1').textContent = windName(s.compass);
+    $('k-c1').textContent = windName(s.compass); $('k-c4').textContent = windName(s.compass);
   }
   mpos.addEventListener('input', drawMatrix);
   drawMatrix();
